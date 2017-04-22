@@ -513,7 +513,7 @@ sense_detail_panel = SenseDetailPanel(
   np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
   PANEL['width'] - MARGIN['panel'][0]*2
 )
-next_draw_y = sense_detail_panel.draw(sense_data) + 50
+next_draw_y = sense_detail_panel.draw(sense_data) + 60
 
 sense_footer_panel = SenseLargeFooterPanel(
   img,
