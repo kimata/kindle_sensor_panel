@@ -13,6 +13,9 @@ ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 ssh.connect(KINDLE_IP, username='root', password='mario', allow_agent=False, look_for_keys=False)
 
+ssh.exec_command('initctl stop powerd')
+ssh.exec_command('initctl stop framework')
+
 i = 0
 while True:
   ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(
