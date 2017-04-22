@@ -263,7 +263,7 @@ class SenseLargeFooterPanel:
     next_draw_y_list.append(draw_text(
       self.image, data['wday_str'],
       offset_map['wday_right'],
-      'wday_large', False, '#333'
+      'wday_large', False, '#666'
     ))
     return int(max(next_draw_y_list))
   
