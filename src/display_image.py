@@ -18,17 +18,16 @@ ssh.exec_command('initctl stop framework')
 
 i = 0
 while True:
-  ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(
+  ssh_stdin = ssh.exec_command(
     'cat - > draw.png && eips %s -g draw.png' % (
       '-f' if (i % REFRESH) == 0 else ''
-    )
-  )
+    ),
+  )[0]
   proc = subprocess.Popen(['python' , 'create_image.py'], stdout=subprocess.PIPE)
-
   ssh_stdin.write(proc.communicate()[0])
   ssh_stdin.close()
-
- 
+  ssh_stdin = None
+  
   time.sleep(UPDATE_SEC)
   i += 1
 

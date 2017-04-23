@@ -556,9 +556,6 @@ update_time_panel = UpdateTimePanel(
 )
 next_draw_y = update_time_panel.draw({'date': datetime.datetime.now()})
 
-
-
 img.save(sys.stdout, 'PNG')
 
-
-
+exit(0)
