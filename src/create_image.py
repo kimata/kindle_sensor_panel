@@ -25,7 +25,7 @@ FONT_MAP           = {
 FACE_MAP = {
   'date_large'        : { 'type': 'FUTURA_COND_BOLD', 'size': 120, },
   'wday_large'        : { 'type': 'SHINGO_BOLD',      'size': 100, },
-  'power_large'       : { 'type': 'FUTURA_COND_BOLD', 'size': 200, },
+  'power_large'       : { 'type': 'FUTURA_COND_BOLD', 'size': 220, },
   'power_detail_label': { 'type': 'FUTURA_MEDIUM',    'size': 50,  },
   'power_detail_value': { 'type': 'FUTURA_MEDIUM',    'size': 70,  },
   'temp_large'        : { 'type': 'FUTURA_COND_BOLD', 'size': 210, },
@@ -136,7 +136,10 @@ class SenseLargeHeaderPanel:
 
     offset_map = {
       'power_icon_left':
-        self.offset,
+        self.offset + np.array([
+          0,
+          10
+        ]),
       'power_max_value_right':
         self.offset + np.array([
           self.width,
@@ -192,7 +195,6 @@ class SenseLargeHeaderPanel:
     ############################################################
     # 電力
     img.paste(self.power_icon, tuple(offset_map['power_icon_left']))
-    
 
     next_draw_y_list.append(draw_text(
       self.image, 'max',
@@ -235,7 +237,7 @@ class SenseLargeHeaderPanel:
       'power_large', False
     ))
       
-    return int(max(next_draw_y_list))
+    return int(max(next_draw_y_list)) + 10
 
 ######################################################################
 class SenseLargeFooterPanel:
@@ -430,7 +432,7 @@ class SenseDetailPanel:
       ))
       i += 1
 
-    return int(max(next_draw_y_list)) + 40
+    return int(max(next_draw_y_list)) + 30
 
 ######################################################################
 class UpdateTimePanel:
