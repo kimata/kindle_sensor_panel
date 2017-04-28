@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import paramiko
+import datetime
 import subprocess
 import time
+import gc
 
 KINDLE_IP   = '192.168.2.193'
 UPDATE_SEC  = 60
@@ -26,8 +28,15 @@ while True:
   proc = subprocess.Popen(['python' , 'create_image.py'], stdout=subprocess.PIPE)
   ssh_stdin.write(proc.communicate()[0])
   ssh_stdin.close()
-  ssh_stdin = None
+
+  # close だけだと，SSH 側がしばらく待っていることがあったので，念のため
+  del ssh_stdin
+  gc.collect()
+
+  # 0 秒になるまで待ったうえで，指定時間待つ
+  time.sleep(UPDATE_SEC - datetime.datetime.now().second)
   
-  time.sleep(UPDATE_SEC)
   i += 1
+
+  
 

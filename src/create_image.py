@@ -26,7 +26,7 @@ FACE_MAP = {
   'date_large'        : { 'type': 'FUTURA_COND_BOLD', 'size': 120, },
   'wday_large'        : { 'type': 'SHINGO_BOLD',      'size': 100, },
   'power_large'       : { 'type': 'FUTURA_COND_BOLD', 'size': 220, },
-  'power_detail_label': { 'type': 'FUTURA_MEDIUM',    'size': 50,  },
+  'power_detail_label': { 'type': 'FUTURA_MEDIUM',    'size': 40,  },
   'power_detail_value': { 'type': 'FUTURA_MEDIUM',    'size': 70,  },
   'temp_large'        : { 'type': 'FUTURA_COND_BOLD', 'size': 210, },
   'humi_large'        : { 'type': 'FUTURA_COND_BOLD', 'size': 210, },
@@ -105,14 +105,14 @@ class SenseLargeHeaderPanel:
     size = get_font('unit_large').getsize(UNIT_MAP['power'])
     return (int(size[0] * 1.2), size[1])
 
-  def __get_power_max_label_box_size(self):
-    return get_font('power_detail_label').getsize('max')
+  def __get_power_5min_label_box_size(self):
+    return get_font('power_detail_label').getsize('5min')
 
-  def __get_power_ave_label_box_size(self):
-    return get_font('power_detail_label').getsize('ave')
+  def __get_power_10min_label_box_size(self):
+    return get_font('power_detail_label').getsize('10min')
 
-  def __get_power_min_label_box_size(self):
-    return get_font('power_detail_label').getsize('min')
+  def __get_power_30min_label_box_size(self):
+    return get_font('power_detail_label').getsize('30min')
   
   def __get_power_detail_value_box_size(self):
     return get_font('power_detail_value').getsize(self.__get_power_str(2444).replace(',', '.'))
@@ -128,9 +128,9 @@ class SenseLargeHeaderPanel:
       'humi_unit'         : self.__get_humi_unit_box_size(),
       'power'             : self.__get_power_box_size(data['power']['last']),
       'power_unit'        : self.__get_power_unit_box_size(),
-      'power_max_label'   : self.__get_power_max_label_box_size(),
-      'power_ave_label'   : self.__get_power_ave_label_box_size(),
-      'power_min_label'   : self.__get_power_min_label_box_size(),
+      'power_5min_label'   : self.__get_power_5min_label_box_size(),
+      'power_10min_label'   : self.__get_power_10min_label_box_size(),
+      'power_30min_label'   : self.__get_power_30min_label_box_size(),
       'power_detail_value': self.__get_power_detail_value_box_size(),
     }
 
@@ -140,50 +140,50 @@ class SenseLargeHeaderPanel:
           0,
           10
         ]),
-      'power_max_value_right':
+      'power_5min_value_right':
         self.offset + np.array([
           self.width,
           0
         ]),
-      'power_ave_value_right':
+      'power_10min_value_right':
         self.offset + np.array([
           self.width,
           box_size['power_detail_value'][1] + 35
         ]),
-      'power_min_value_right':
+      'power_30min_value_right':
         self.offset + np.array([
           self.width,
           2 * (box_size['power_detail_value'][1] + 35)
         ]),
     }
 
-    offset_map['power_max_label_left'] = \
-      offset_map['power_max_value_right'] + np.array([
-        - box_size['power_detail_value'][0] - box_size['power_max_label'][0] - 20,
-        box_size['power_detail_value'][1] - box_size['power_max_label'][1]
+    offset_map['power_5min_label_left'] = \
+      offset_map['power_5min_value_right'] + np.array([
+        - box_size['power_detail_value'][0] - box_size['power_30min_label'][0] - 10,
+        box_size['power_detail_value'][1] - box_size['power_5min_label'][1]
       ]);
 
-    offset_map['power_ave_label_left'] = \
-      offset_map['power_ave_value_right'] + np.array([
-        - box_size['power_detail_value'][0] - box_size['power_max_label'][0] - 20,
-        box_size['power_detail_value'][1] - box_size['power_ave_label'][1]
+    offset_map['power_10min_label_left'] = \
+      offset_map['power_10min_value_right'] + np.array([
+        - box_size['power_detail_value'][0] - box_size['power_30min_label'][0] - 10,
+        box_size['power_detail_value'][1] - box_size['power_10min_label'][1]
       ]);
     
-    offset_map['power_min_label_left'] = \
-      offset_map['power_min_value_right'] + np.array([
-        - box_size['power_detail_value'][0] - box_size['power_max_label'][0] - 20,
-        box_size['power_detail_value'][1] - box_size['power_min_label'][1]
+    offset_map['power_30min_label_left'] = \
+      offset_map['power_30min_value_right'] + np.array([
+        - box_size['power_detail_value'][0] - box_size['power_30min_label'][0] - 10,
+        box_size['power_detail_value'][1] - box_size['power_30min_label'][1]
       ]);
 
     offset_map['power_unit_right'] = \
       np.array([
-        offset_map['power_max_label_left'][0] - 50,
-        offset_map['power_max_value_right'][1] + box_size['power'][1] - box_size['power_unit'][1]
+        offset_map['power_5min_label_left'][0] - 50,
+        offset_map['power_5min_value_right'][1] + box_size['power'][1] - box_size['power_unit'][1]
       ]);
     offset_map['power_right'] = \
       np.array([
         offset_map['power_unit_right'][0] - box_size['power_unit'][1] - 10,
-        offset_map['power_max_value_right'][1]
+        offset_map['power_5min_value_right'][1]
       ]);
 
     return offset_map
@@ -197,33 +197,33 @@ class SenseLargeHeaderPanel:
     img.paste(self.power_icon, tuple(offset_map['power_icon_left']))
 
     next_draw_y_list.append(draw_text(
-      self.image, 'max',
-      offset_map['power_max_label_left'],
+      self.image, '5min',
+      offset_map['power_5min_label_left'],
       'power_detail_label'
     ))
     next_draw_y_list.append(draw_text(
-      self.image, 'ave',
-      offset_map['power_ave_label_left'],
+      self.image, '10min',
+      offset_map['power_10min_label_left'],
       'power_detail_label'
     ))
     next_draw_y_list.append(draw_text(
-      self.image, 'min',
-      offset_map['power_min_label_left'],
+      self.image, '30min',
+      offset_map['power_30min_label_left'],
       'power_detail_label'
     ))
     next_draw_y_list.append(draw_text(
-      self.image, self.__get_power_str(data['power']['max']),
-      offset_map['power_max_value_right'],
+      self.image, self.__get_power_str(data['power']['5min']),
+      offset_map['power_5min_value_right'],
       'power_detail_value', False
     ))
     next_draw_y_list.append(draw_text(
-      self.image, self.__get_power_str(data['power']['ave']),
-      offset_map['power_ave_value_right'],
+      self.image, self.__get_power_str(data['power']['10min']),
+      offset_map['power_10min_value_right'],
       'power_detail_value', False
     ))
     next_draw_y_list.append(draw_text(
-      self.image, self.__get_power_str(data['power']['min']),
-      offset_map['power_min_value_right'],
+      self.image, self.__get_power_str(data['power']['30min']),
+      offset_map['power_30min_value_right'],
       'power_detail_value', False
     ))
     next_draw_y_list.append(draw_text(
@@ -232,7 +232,7 @@ class SenseLargeHeaderPanel:
       'unit_large', False
     ))
     next_draw_y_list.append(draw_text(
-      self.image, self.__get_power_str(data['power']['last']),
+      self.image, self.__get_power_str(data['power']['1min']),
       offset_map['power_right'],
       'power_large', False
     ))
@@ -483,17 +483,18 @@ HOST_MAP  = {
 }
 
 # InfluxDB にアクセスしてセンサーデータを取得
-def get_sensor_value(value, hostname):
+def get_sensor_value(value, hostname, time_range='1h'):
   response = requests.get(
     'http://localhost:8086/query',
     params={
       'db': 'sensor',
       'q': (
-        'SELECT %s FROM "sensor" WHERE "hostname" = \'%s\' AND time > now() - 1h ' + \
-        'ORDER by time desc LIMIT 1'
-      ) % (value, hostname)
+        'SELECT %s FROM "sensor" WHERE "hostname" = \'%s\' AND time > now() - %s ' + \
+        'ORDER by time desc'
+      ) % (value, hostname, time_range)
     }
   )
+
   columns = response.json()['results'][0]['series'][0]['columns']
   values = response.json()['results'][0]['series'][0]['values'][0]
 
@@ -515,9 +516,10 @@ def get_sensor_data_map():
 def get_power_data_map():
   return {
     'last': get_sensor_value('last(power)', HOST_MAP[u'電力'])['last'],
-    'max': get_sensor_value('max(power)', HOST_MAP[u'電力'])['max'],
-    'ave': get_sensor_value('mean(power)', HOST_MAP[u'電力'])['mean'],
-    'min': get_sensor_value('min(power)', HOST_MAP[u'電力'])['min'],
+    '1min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '1m')['mean'],
+    '5min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '5m')['mean'],
+    '10min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '10m')['mean'],
+    '30min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '30m')['mean'],
   }
   
 ######################################################################
