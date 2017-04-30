@@ -5,18 +5,22 @@ import paramiko
 import datetime
 import subprocess
 import time
+import sys
 import os
 import gc
 
-KINDLE_IP   = 'display-living'
 UPDATE_SEC  = 60
 REFRESH     = 60
 
 CREATE_IMAGE = os.path.dirname(os.path.abspath(__file__)) + '/create_image.py'
 
+kindle_hostname = sys.argv[1]
+
+print('kindle hostname: %s' % (kindle_hostname))
+
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect(KINDLE_IP, username='root', password='mario', allow_agent=False, look_for_keys=False)
+ssh.connect(kindle_hostname, username='root', password='mario', allow_agent=False, look_for_keys=False)
 print('connect ok.')
 ssh.exec_command('initctl stop powerd')
 ssh.exec_command('initctl stop framework')
