@@ -159,13 +159,13 @@ class SenseLargeHeaderPanel:
 
     offset_map['power_5min_label_left'] = \
       offset_map['power_5min_value_right'] + np.array([
-        - box_size['power_detail_value'][0] - box_size['power_30min_label'][0] - 10,
+        - box_size['power_detail_value'][0] - box_size['power_5min_label'][0] - 10,
         box_size['power_detail_value'][1] - box_size['power_5min_label'][1]
       ]);
 
     offset_map['power_10min_label_left'] = \
       offset_map['power_10min_value_right'] + np.array([
-        - box_size['power_detail_value'][0] - box_size['power_30min_label'][0] - 10,
+        - box_size['power_detail_value'][0] - box_size['power_10min_label'][0] - 10,
         box_size['power_detail_value'][1] - box_size['power_10min_label'][1]
       ]);
     
