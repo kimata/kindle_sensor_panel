@@ -12,7 +12,7 @@ KINDLE_IP   = 'display-living'
 UPDATE_SEC  = 60
 REFRESH     = 60
 
-CREATE_IMAGE = os.path.dirname(os.path.abspath(__file__)) + 'create_image.py'
+CREATE_IMAGE = os.path.dirname(os.path.abspath(__file__)) + '/create_image.py'
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
