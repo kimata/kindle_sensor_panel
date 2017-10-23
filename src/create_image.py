@@ -573,10 +573,10 @@ img = PIL.Image.new('L', (PANEL['width'], PANEL['height']), '#FFF')
 try:
   draw_panel(img)
 except:
-  import traceback
+  import traceback, textwrap
   title_offset = get_font('error_title').getsize('ERROR')
   draw_text(img, 'ERROR', (20, 20), 'error_title')
-  draw_text(img, traceback.format_exc(), (20, 20 + title_offset[1] + 40), 'error_detail')
+  draw_text(img, textwrap.wrap(traceback.format_exc(), 40), (20, 20 + title_offset[1] + 40), 'error_detail')
 
 img.save(sys.stdout, 'PNG')
 
