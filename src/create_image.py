@@ -41,7 +41,7 @@ FACE_MAP = {
   'unit'              : { 'type': 'SHINGO_REGULAR',   'size': 40,  },
   'time'              : { 'type': 'SHINGO_REGULAR',   'size': 20,  },
   'error_title'       : { 'type': 'FUTURA_BOLD',      'size': 250, },
-  'error_detail'      : { 'type': 'FUTURA_MEDIUM',    'size': 30,  },
+  'error_detail'      : { 'type': 'FUTURA_MEDIUM',    'size': 24,  },
 }
 
 UNIT_MAP = {
@@ -573,10 +573,10 @@ img = PIL.Image.new('L', (PANEL['width'], PANEL['height']), '#FFF')
 try:
   draw_panel(img)
 except:
-  import traceback, textwrap
+  import traceback
   title_offset = get_font('error_title').getsize('ERROR')
   draw_text(img, 'ERROR', (20, 20), 'error_title')
-  draw_text(img, textwrap.wrap(traceback.format_exc(), 40), (20, 20 + title_offset[1] + 40), 'error_detail')
+  draw_text(img, traceback.format_exc(), (20, 20 + title_offset[1] + 20), 'error_detail')
 
 img.save(sys.stdout, 'PNG')
 
