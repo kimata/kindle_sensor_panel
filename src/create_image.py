@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
 import datetime
 import requests
 import numpy as np
@@ -10,8 +11,10 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import functools
 
-CALENDAR_ICON_PATH = '../img/calendar.png'
-POWER_ICON_PATH    = '../img/power.png'
+IMG_DIR_PATH       = os.path.dirname(os.path.abspath(__file__)) + '/../'
+CALENDAR_ICON_PATH = IMG_DIR_PATH + 'img/calendar.png'
+POWER_ICON_PATH    = IMG_DIR_PATH + 'img/power.png'
+
 FONT_PATH          = '/usr/share/fonts/opentype/'
 FONT_MAP           = {
   'SHINGO_REGULAR'  : 'ShinGoPro/A-OTF-ShinGoPro-Regular.otf',
@@ -27,16 +30,18 @@ FACE_MAP = {
   'wday_large'        : { 'type': 'SHINGO_BOLD',      'size': 100, },
   'power_large'       : { 'type': 'FUTURA_COND_BOLD', 'size': 220, },
   'power_detail_label': { 'type': 'FUTURA_MEDIUM',    'size': 40,  },
-  'power_detail_value': { 'type': 'FUTURA_MEDIUM',    'size': 70,  },
+  'power_detail_value': { 'type': 'FUTURA_MEDIUM',    'size': 68,  },
   'temp_large'        : { 'type': 'FUTURA_COND_BOLD', 'size': 210, },
   'humi_large'        : { 'type': 'FUTURA_COND_BOLD', 'size': 210, },
   'unit_large'        : { 'type': 'FUTURA_MEDIUM',    'size': 40,  },
   'place'             : { 'type': 'SHINGO_MEDIUM',    'size': 40,  },
-  'temp'              : { 'type': 'FUTURA_COND_BOLD', 'size': 170, },
-  'humi'              : { 'type': 'FUTURA_COND_BOLD', 'size': 170, },
-  'co2'               : { 'type': 'FUTURA_COND_BOLD', 'size': 80,  },
+  'temp'              : { 'type': 'FUTURA_COND_BOLD', 'size': 152, },
+  'humi'              : { 'type': 'FUTURA_COND_BOLD', 'size': 152, },
+  'co2'               : { 'type': 'FUTURA_COND_BOLD', 'size': 100, },
   'unit'              : { 'type': 'SHINGO_REGULAR',   'size': 40,  },
   'time'              : { 'type': 'SHINGO_REGULAR',   'size': 20,  },
+  'error_title'       : { 'type': 'FUTURA_BOLD',      'size': 250, },
+  'error_detail'      : { 'type': 'FUTURA_MEDIUM',    'size': 30,  },
 }
 
 UNIT_MAP = {
@@ -237,7 +242,7 @@ class SenseLargeHeaderPanel:
       'power_large', False
     ))
       
-    return int(max(next_draw_y_list)) + 10
+    return int(max(next_draw_y_list))
 
 ######################################################################
 class SenseLargeFooterPanel:
@@ -420,16 +425,17 @@ class SenseDetailPanel:
         offset_map['humi_unit-right'] + line_offset,
         'unit', False
       ))
-      next_draw_y_list.append(draw_text(
-        self.image, '{:,}'.format(data['co2']),
-        offset_map['co2-right'] + line_offset,
-        'co2', False
-      ))
-      next_draw_y_list.append(draw_text(
-        self.image, UNIT_MAP['co2'],
-        offset_map['co2_unit-right'] + line_offset,
-        'unit', False
-      ))
+      if data['co2'] is not None:
+        next_draw_y_list.append(draw_text(
+          self.image, '{:,}'.format(data['co2']),
+          offset_map['co2-right'] + line_offset,
+          'co2', False
+        ))
+        next_draw_y_list.append(draw_text(
+          self.image, UNIT_MAP['co2'],
+          offset_map['co2_unit-right'] + line_offset,
+          'unit', False
+        ))
       i += 1
 
     return int(max(next_draw_y_list)) + 30
@@ -473,8 +479,9 @@ class UpdateTimePanel:
     return int(max(next_draw_y_list)) + 40
       
 ######################################################################
-PLACE_LIST = [u'リビング', u'和室', u'家事室', u'書斎']
+PLACE_LIST = [u'屋外', u'リビング', u'和室', u'家事室', u'書斎']
 HOST_MAP  = {
+  u'屋外'    : 'ESP32-outdoor',
   u'リビング': 'rasp-meter-1',
   u'和室'    : 'rasp-meter-2',
   u'家事室'  : 'rasp-meter-4',
@@ -521,44 +528,55 @@ def get_power_data_map():
     '10min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '10m')['mean'],
     '30min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '30m')['mean'],
   }
+
+def draw_panel(img):
+  sense_data = get_sensor_data_map()
   
+  next_draw_y = 0
+  sense_header_panel = SenseLargeHeaderPanel(
+    img,
+    np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
+    PANEL['width'] - MARGIN['panel'][0]*2
+  )
+  next_draw_y = sense_header_panel.draw({
+    'power': get_power_data_map(),
+  })
+
+  sense_detail_panel = SenseDetailPanel(
+    img,
+    np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
+    PANEL['width'] - MARGIN['panel'][0]*2
+  )
+  next_draw_y = sense_detail_panel.draw(sense_data)
+
+  # sense_footer_panel = SenseLargeFooterPanel(
+  #   img,
+  #   np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
+  #   PANEL['width'] - MARGIN['panel'][0]*2
+  # )
+  # next_draw_y = sense_footer_panel.draw({
+  #   'date': datetime.datetime.now(),
+  # })
+
+  update_time_panel = UpdateTimePanel(
+    img,
+    np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
+    PANEL['width'] - MARGIN['panel'][0]*2
+  )
+  next_draw_y = update_time_panel.draw({'date': datetime.datetime.now()})
+
 ######################################################################
-sense_data = get_sensor_data_map()
+
 
 img = PIL.Image.new('L', (PANEL['width'], PANEL['height']), '#FFF')
 
-next_draw_y = 0
-sense_header_panel = SenseLargeHeaderPanel(
-  img,
-  np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
-  PANEL['width'] - MARGIN['panel'][0]*2
-)
-next_draw_y = sense_header_panel.draw({
-  'power': get_power_data_map(),
-})
-
-sense_detail_panel = SenseDetailPanel(
-  img,
-  np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
-  PANEL['width'] - MARGIN['panel'][0]*2
-)
-next_draw_y = sense_detail_panel.draw(sense_data)
-
-sense_footer_panel = SenseLargeFooterPanel(
-  img,
-  np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
-  PANEL['width'] - MARGIN['panel'][0]*2
-)
-next_draw_y = sense_footer_panel.draw({
-  'date': datetime.datetime.now(),
-})
-
-update_time_panel = UpdateTimePanel(
-  img,
-  np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
-  PANEL['width'] - MARGIN['panel'][0]*2
-)
-next_draw_y = update_time_panel.draw({'date': datetime.datetime.now()})
+try:
+  draw_panel(img)
+except:
+  import traceback
+  title_offset = get_font('error_title').getsize('ERROR')
+  draw_text(img, 'ERROR', (20, 20), 'error_title')
+  draw_text(img, traceback.format_exc(), (20, 20 + title_offset[1] + 40), 'error_detail')
 
 img.save(sys.stdout, 'PNG')
 
