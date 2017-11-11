@@ -10,6 +10,7 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 import functools
+from retrying import retry
 
 IMG_DIR_PATH       = os.path.dirname(os.path.abspath(__file__)) + '/../'
 CALENDAR_ICON_PATH = IMG_DIR_PATH + 'img/calendar.png'
@@ -97,7 +98,7 @@ class SenseLargeHeaderPanel:
     return get_font('unit_large').getsize(UNIT_MAP['temp'])
 
   def __get_humi_box_size(self):
-    return get_font('humi_large').getsize('44.4')
+    return get_font('humi_large').getsize('100.0')
 
   def __get_humi_unit_box_size(self):
     return get_font('unit_large').getsize(UNIT_MAP['humi'])
@@ -327,7 +328,7 @@ class SenseDetailPanel:
     return (int(size[0] * 1.2), size[1])
 
   def __get_humi_box_size(self):
-    return get_font('humi').getsize('44.4')
+    return get_font('humi').getsize('100.0')
 
   def __get_humi_unit_box_size(self):
     size = get_font('unit').getsize(UNIT_MAP['humi'])
@@ -529,6 +530,7 @@ def get_power_data_map():
     '30min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '30m')['mean'],
   }
 
+@retry(stop_max_attempt_number=3, wait_fixed=2000)
 def draw_panel(img):
   sense_data = get_sensor_data_map()
   
