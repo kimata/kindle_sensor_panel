@@ -10,7 +10,7 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 import functools
-from retrying import retry
+# from retrying import retry
 
 IMG_DIR_PATH       = os.path.dirname(os.path.abspath(__file__)) + '/../'
 CALENDAR_ICON_PATH = IMG_DIR_PATH + 'img/calendar.png'
@@ -426,7 +426,7 @@ class SenseDetailPanel:
         offset_map['humi_unit-right'] + line_offset,
         'unit', False
       ))
-      if data['co2'] is not None:
+      if data.has_key('co2'):
         next_draw_y_list.append(draw_text(
           self.image, '{:,}'.format(data['co2']),
           offset_map['co2-right'] + line_offset,
@@ -482,12 +482,12 @@ class UpdateTimePanel:
 ######################################################################
 PLACE_LIST = [u'屋外', u'リビング', u'和室', u'家事室', u'書斎']
 HOST_MAP  = {
-  u'屋外'    : 'ESP32-outdoor',
-  u'リビング': 'rasp-meter-1',
-  u'和室'    : 'rasp-meter-2',
-  u'家事室'  : 'rasp-meter-4',
-  u'書斎'    : 'rasp-meter-3',
-  u'電力'    : 'rasp-meter-5',
+  u'屋外'    : ['ESP32-outdoor'],
+  u'リビング': ['rasp-meter-1', 'ESP32-indoor2'], 
+  u'和室'    : ['rasp-meter-2'],
+  u'家事室'  : ['rasp-meter-4'],
+  u'書斎'    : ['rasp-meter-3'],
+  u'電力'    : ['rasp-meter-5'],
 }
 
 # InfluxDB にアクセスしてセンサーデータを取得
@@ -512,10 +512,13 @@ def get_sensor_value(value, hostname, time_range='1h'):
 
   return data
 
+import sys
 def get_sensor_data_map():
   data = []
   for place in PLACE_LIST:
-    value = get_sensor_value('*', HOST_MAP[place])
+    value = {}
+    for host in HOST_MAP[place]:
+      value.update({k:v for k,v in get_sensor_value('*', host).iteritems() if v is not None})
     value['place'] = place
     data.append(value)
 
@@ -523,14 +526,14 @@ def get_sensor_data_map():
 
 def get_power_data_map():
   return {
-    'last': get_sensor_value('last(power)', HOST_MAP[u'電力'])['last'],
-    '1min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '1m')['mean'],
-    '5min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '5m')['mean'],
-    '10min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '10m')['mean'],
-    '30min': get_sensor_value('mean(power)', HOST_MAP[u'電力'], '30m')['mean'],
+    'last': get_sensor_value('last(power)', HOST_MAP[u'電力'][0])['last'],
+    '1min': get_sensor_value('mean(power)', HOST_MAP[u'電力'][0], '1m')['mean'],
+    '5min': get_sensor_value('mean(power)', HOST_MAP[u'電力'][0], '5m')['mean'],
+    '10min': get_sensor_value('mean(power)', HOST_MAP[u'電力'][0], '10m')['mean'],
+    '30min': get_sensor_value('mean(power)', HOST_MAP[u'電力'][0], '30m')['mean'],
   }
 
-@retry(stop_max_attempt_number=3, wait_fixed=2000)
+# @retry(stop_max_attempt_number=10, wait_fixed=2000)
 def draw_panel(img):
   sense_data = get_sensor_data_map()
   
@@ -574,11 +577,14 @@ img = PIL.Image.new('L', (PANEL['width'], PANEL['height']), '#FFF')
 
 try:
   draw_panel(img)
-except:
+except Exception as e:
   import traceback
   title_offset = get_font('error_title').getsize('ERROR')
   draw_text(img, 'ERROR', (20, 20), 'error_title')
   draw_text(img, traceback.format_exc(), (20, 20 + title_offset[1] + 20), 'error_detail')
+
+  print >>sys.stderr, e.args
+  print >>sys.stderr, traceback.format_exc()
 
 img.save(sys.stdout, 'PNG')
 
