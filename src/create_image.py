@@ -124,7 +124,10 @@ class SenseLargeHeaderPanel:
     return get_font('power_detail_value').getsize(self.__get_power_str(2444).replace(',', '.'))
 
   def __get_power_str(self, value):
-    return '{:,}'.format(int(value))
+    if value is None:
+      return '?'
+    else:
+      return '{:,}'.format(int(value))
   
   def offset_map(self, data):
     box_size = {
