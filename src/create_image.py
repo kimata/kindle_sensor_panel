@@ -497,12 +497,14 @@ HOST_MAP  = {
 def get_sensor_value(value, hostname, time_range='1h'):
   response = requests.get(
     'http://localhost:8086/query',
-    params={
+    params = {
       'db': 'sensor',
       'q': (
-        'SELECT %s FROM "sensor" WHERE "hostname" = \'%s\' AND time > now() - %s ' + \
+        'SELECT %s FROM "%s" WHERE "hostname" = \'%s\' AND time > now() - %s ' + \
         'ORDER by time desc'
-      ) % (value, hostname, time_range)
+      ) % (value,
+           'sensor.esp32' if hostname.count('ESP32') else 'sensor.raspberrypi',
+           hostname, time_range)
     }
   )
 
