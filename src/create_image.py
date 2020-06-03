@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import sys
@@ -10,7 +10,7 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 import functools
-# from retrying import retry
+from future.utils import iteritems
 
 IMG_DIR_PATH       = os.path.dirname(os.path.abspath(__file__)) + '/../'
 CALENDAR_ICON_PATH = IMG_DIR_PATH + 'img/calendar.png'
@@ -429,7 +429,7 @@ class SenseDetailPanel:
         offset_map['humi_unit-right'] + line_offset,
         'unit', False
       ))
-      if data.has_key('co2'):
+      if 'co2' in data:
         next_draw_y_list.append(draw_text(
           self.image, '{:,}'.format(data['co2']),
           offset_map['co2-right'] + line_offset,
@@ -508,13 +508,6 @@ def get_sensor_value(value, hostname, time_range='1h'):
     }
   )
   
-  # print >> sys.stderr, (
-  #   'SELECT %s FROM "%s" WHERE "hostname" = \'%s\' AND time > now() - %s ' + \
-  #   'ORDER by time desc'
-  # ) % (value,
-  #      'sensor.esp32' if hostname.count('ESP32') else 'sensor.raspberrypi',
-  #      hostname, time_range)
-
   columns = response.json()['results'][0]['series'][0]['columns']
   values = response.json()['results'][0]['series'][0]['values'][0]
 
@@ -530,7 +523,7 @@ def get_sensor_data_map():
   for place in PLACE_LIST:
     value = {}
     for host in HOST_MAP[place]:
-      value.update({k:v for k,v in get_sensor_value('*', host).iteritems() if v is not None})
+      value.update({k:v for k,v in iteritems(get_sensor_value('*', host)) if v is not None})
     value['place'] = place
     data.append(value)
 
@@ -601,9 +594,8 @@ except Exception as e:
   draw_text(img, 'ERROR', (20, 20), 'error_title')
   draw_text(img, traceback.format_exc(), (20, 20 + title_offset[1] + 20), 'error_detail')
 
-  print >>sys.stderr, e.args
-  print >>sys.stderr, traceback.format_exc()
+  print(traceback.format_exc(), file=sys.stderr)
 
-img.save(sys.stdout, 'PNG')
+img.save(sys.stdout.buffer, 'PNG')
 
 exit(0)
