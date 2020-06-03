@@ -4,7 +4,6 @@
 import paramiko
 import datetime
 import subprocess
-import socket
 import time
 import sys
 import os
@@ -47,11 +46,10 @@ while True:
     ssh_stdin.write(proc.communicate()[0])
     ssh_stdin.close()
     fail = 0
-  except socket.error:
+  except:
     fail += 1
     time.sleep(10)
     ssh = ssh_connect()
-    pass
 
   # close だけだと，SSH 側がしばらく待っていることがあったので，念のため
   del ssh_stdin
