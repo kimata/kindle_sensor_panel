@@ -70,17 +70,17 @@ def get_font(face):
 
 def draw_text(img, text, pos, face, align=True, color='#000'):
   draw = PIL.ImageDraw.Draw(img)
-  draw.font = get_font(face)
-  next_pos_y =  pos[1] + draw.font.getsize(text)[1]
+  font = get_font(face)
+  next_pos_y =  pos[1] + font.getsize(text)[1]
 
   if align:
     # 右寄せ
     None
   else:
     # 左寄せ
-    pos = (pos[0]-draw.font.getsize(text)[0], pos[1])
+    pos = (pos[0]-font.getsize(text)[0], pos[1])
     
-  draw.text(pos, text, color)
+  draw.text(pos, text, color, font, None, font.getsize(text)[1]*0.4)
   
   return next_pos_y
 
