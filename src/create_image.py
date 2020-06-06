@@ -10,6 +10,7 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 import functools
+import textwrap
 from future.utils import iteritems
 
 IMG_DIR_PATH       = os.path.dirname(os.path.abspath(__file__)) + '/../'
@@ -40,9 +41,9 @@ FACE_MAP = {
   'humi'              : { 'type': 'FUTURA_COND_BOLD', 'size': 152, },
   'co2'               : { 'type': 'FUTURA_COND_BOLD', 'size': 100, },
   'unit'              : { 'type': 'SHINGO_REGULAR',   'size': 40,  },
-  'time'              : { 'type': 'SHINGO_REGULAR',   'size': 20,  },
-  'error_title'       : { 'type': 'FUTURA_BOLD',      'size': 250, },
-  'error_detail'      : { 'type': 'FUTURA_MEDIUM',    'size': 24,  },
+  'time'              : { 'type': 'SHINGO_REGULAR',   'size': 30,  },
+  'error_title'       : { 'type': 'FUTURA_BOLD',      'size': 200, },
+  'error_detail'      : { 'type': 'FUTURA_MEDIUM',    'size': 36,  },
 }
 
 UNIT_MAP = {
@@ -592,7 +593,9 @@ except Exception as e:
   import traceback
   title_offset = get_font('error_title').getsize('ERROR')
   draw_text(img, 'ERROR', (20, 20), 'error_title')
-  draw_text(img, traceback.format_exc(), (20, 20 + title_offset[1] + 20), 'error_detail')
+  draw_text(img,
+            '\n'.join(textwrap.wrap(traceback.format_exc(), 45)),
+            (20, 20 + title_offset[1] + 40), 'error_detail')
 
   print(traceback.format_exc(), file=sys.stderr)
 
