@@ -395,7 +395,19 @@ class SenseDetailPanel:
     offset_map['line_height'] = box_size['place'][1] + max_height * 1.40
       
     return offset_map
-      
+
+  def get_float_value(self, data, key):
+    if key in data:
+      return '%.1f' % (data[key])
+    else:
+      return '?  '
+
+  def get_int_value(self, data, key):
+    if key in data:
+      return '{:,}'.format(data[key])
+    else:
+      return '?  '
+
   def draw(self, data_list):
     offset_map = self.offset_map()
     next_draw_y_list = []
@@ -410,8 +422,9 @@ class SenseDetailPanel:
         offset_map['place-left'] + line_offset,
         'place'
       ))
+
       next_draw_y_list.append(draw_text(
-        self.image, '%.1f' % (data['temp']),
+        self.image, self.get_float_value(data, 'temp'),
         offset_map['temp-right'] + line_offset,
         'temp', False
       ))
@@ -421,7 +434,7 @@ class SenseDetailPanel:
         'unit', False
       ))
       next_draw_y_list.append(draw_text(
-        self.image, '%.1f' % (data['humi']),
+        self.image, self.get_float_value(data, 'humi'),
         offset_map['humi-right'] + line_offset,
         'humi', False
       ))
@@ -432,7 +445,7 @@ class SenseDetailPanel:
       ))
       if 'co2' in data:
         next_draw_y_list.append(draw_text(
-          self.image, '{:,}'.format(data['co2']),
+          self.image, self.get_int_value(data, 'co2'),
           offset_map['co2-right'] + line_offset,
           'co2', False
         ))
@@ -495,7 +508,7 @@ HOST_MAP  = {
 }
 
 # InfluxDB にアクセスしてセンサーデータを取得
-def get_sensor_value(value, hostname, time_range='1h'):
+def get_sensor_value_impl(value, hostname, time_range):
   response = requests.get(
     'http://localhost:8086/query',
     params = {
@@ -508,7 +521,7 @@ def get_sensor_value(value, hostname, time_range='1h'):
            hostname, time_range)
     }
   )
-  
+
   columns = response.json()['results'][0]['series'][0]['columns']
   values = response.json()['results'][0]['series'][0]['values'][0]
 
@@ -518,7 +531,16 @@ def get_sensor_value(value, hostname, time_range='1h'):
 
   return data
 
-import sys
+def get_sensor_value(value, hostname, time_range='1h'):
+  try:
+    return get_sensor_value_impl(value, hostname, time_range)
+  except Exception as e:
+    import traceback
+    print('WARN: host = %s' % (hostname), file=sys.stderr)
+    print(traceback.format_exc(), file=sys.stderr)
+
+    return {}
+
 def get_sensor_data_map():
   data = []
   for place in PLACE_LIST:
