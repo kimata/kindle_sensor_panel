@@ -491,7 +491,7 @@ class UpdateTimePanel:
     next_draw_y_list.append(draw_text(
       self.image, u'{0:%Y-%m-%d %H:%M} 更新'.format(data['date']),
       offset_map['time_right'],
-      'time', False
+      'time', False, '#666'
     ))
 
     return int(max(next_draw_y_list)) + 40
@@ -587,15 +587,6 @@ def draw_panel(img):
     PANEL['width'] - MARGIN['panel'][0]*2
   )
   next_draw_y = sense_detail_panel.draw(sense_data)
-
-  # sense_footer_panel = SenseLargeFooterPanel(
-  #   img,
-  #   np.array(MARGIN['panel']) + np.array([0, next_draw_y]),
-  #   PANEL['width'] - MARGIN['panel'][0]*2
-  # )
-  # next_draw_y = sense_footer_panel.draw({
-  #   'date': datetime.datetime.now(),
-  # })
 
   update_time_panel = UpdateTimePanel(
     img,
