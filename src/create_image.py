@@ -104,9 +104,9 @@ class SenseLargeHeaderPanel:
   def __get_humi_unit_box_size(self):
     return get_font('unit_large').getsize(UNIT_MAP['humi'])
   
-  def __get_power_box_size(self, value):
+  def __get_power_box_size(self):
     # PIM が baseline を取得できないっぽいので，「,」ではなく「.」を使う
-    return get_font('power_large').getsize(self.__get_power_str(value).replace(',', '.'))
+    return get_font('power_large').getsize('1.000')
   
   def __get_power_unit_box_size(self):
     size = get_font('unit_large').getsize(UNIT_MAP['power'])
@@ -126,7 +126,7 @@ class SenseLargeHeaderPanel:
 
   def __get_power_str(self, value):
     if value is None:
-      return '?'
+      return '?  '
     else:
       return '{:,}'.format(int(value))
 
@@ -136,7 +136,7 @@ class SenseLargeHeaderPanel:
       'temp_unit'         : self.__get_temp_unit_box_size(),
       'humi'              : self.__get_humi_box_size(),
       'humi_unit'         : self.__get_humi_unit_box_size(),
-      'power'             : self.__get_power_box_size(data['power']['last']),
+      'power'             : self.__get_power_box_size(),
       'power_unit'        : self.__get_power_unit_box_size(),
       'power_10min_label'   : self.__get_power_10min_label_box_size(),
       'power_60min_label'   : self.__get_power_60min_label_box_size(),
@@ -329,23 +329,24 @@ class SenseDetailPanel:
 
   def __get_temp_unit_box_size(self):
     size = get_font('unit').getsize(UNIT_MAP['temp'])
-    return (int(size[0] * 1.2), size[1])
+    return (int(size[0] * 1), size[1])
 
   def __get_humi_box_size(self):
-    return get_font('humi').getsize('100.0')
+    return get_font('humi').getsize('888.8')
 
   def __get_humi_unit_box_size(self):
     size = get_font('unit').getsize(UNIT_MAP['humi'])
-    return (int(size[0] * 1.2), size[1])
+    return (int(size[0] * 1), size[1])
 
   def __get_co2_box_size(self):
     return (
-      get_font('co2').getsize('4,444')[0],
+      get_font('co2').getsize('2,888')[0],
       get_font('co2').getsize('4')[1],
     )
   def __get_co2_unit_box_size(self):
     # PIM が baseline を取得できないっぽいので，descent が無い「m」を使う
-    return get_font('unit').getsize('m' * len(UNIT_MAP['co2']))
+    size = get_font('unit').getsize('m' * len(UNIT_MAP['co2']))
+    return (int(size[0] * 0.8), size[1])
       
   def offset_map(self):
     box_size = {
@@ -552,15 +553,15 @@ def get_sensor_data_map():
 
   return data
 
-def get_power_data(time_range):
+def get_power_data(time_range, mode='mean'):
   try:
-    return get_sensor_value('mean(power)', HOST_MAP[u'電力'][0], time_range)['mean']
+    return get_sensor_value('%s(power)' % (mode), HOST_MAP[u'電力'][0], time_range)['mean']
   except:
     return None
 
 def get_power_data_map():
   return {
-    'last': get_sensor_value('last(power)', HOST_MAP[u'電力'][0])['last'],
+    'last': get_power_data('60m', 'last'),
     '3min': get_power_data('3m'),
     '10min': get_power_data('10m'),
     '60min': get_power_data('60m'),
