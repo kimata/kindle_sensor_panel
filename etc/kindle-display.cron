@@ -1,0 +1,4 @@
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+*/1 *	* * *	kimata  setlock -xn /tmp/kindle-living.lock /home/kimata/github/kindle_display/src/display_image.py display-living 2>&1 > /dev/shm/kindle-living.log
+*/1 *	* * *	kimata  setlock -xn /tmp/kindle-library.lock /home/kimata/github/kindle_display/src/display_image.py display-library 2>&1 > /dev/shm/kindle-library.log
