@@ -42,7 +42,7 @@ while True:
       ),
     )[0]
 
-    proc = subprocess.Popen(['python' , CREATE_IMAGE], stdout=subprocess.PIPE)
+    proc = subprocess.Popen(['python3' , CREATE_IMAGE], stdout=subprocess.PIPE)
     ssh_stdin.write(proc.communicate()[0])
     ssh_stdin.close()
     fail = 0
