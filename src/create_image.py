@@ -500,7 +500,7 @@ class UpdateTimePanel:
 ######################################################################
 PLACE_LIST = [u'屋外', u'リビング', u'和室', u'家事室', u'書斎']
 HOST_MAP  = {
-  u'屋外'    : ['ESP32-outdoor'],
+  u'屋外'    : ['ESP32-outdoor-1'],
   u'リビング': ['rasp-meter-1', 'ESP32-indoor2'], 
   u'和室'    : ['rasp-meter-2'],
   u'家事室'  : ['rasp-meter-4'],
