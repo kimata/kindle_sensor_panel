@@ -563,7 +563,6 @@ def get_power_data(time_range, mode='mean'):
 
 def get_power_data_map():
   return {
-    'last': get_power_data('60m', 'last'),
     '3min': get_power_data('3m'),
     '10min': get_power_data('10m'),
     '60min': get_power_data('60m'),
