@@ -13,6 +13,8 @@ import functools
 import textwrap
 from future.utils import iteritems
 
+INFLUX_DB_HOST     = 'columbia'
+
 IMG_DIR_PATH       = os.path.dirname(os.path.abspath(__file__)) + '/../'
 CALENDAR_ICON_PATH = IMG_DIR_PATH + 'img/calendar.png'
 POWER_ICON_PATH    = IMG_DIR_PATH + 'img/power.png'
@@ -501,7 +503,7 @@ class UpdateTimePanel:
 PLACE_LIST = [u'屋外', u'リビング', u'和室', u'家事室', u'書斎']
 HOST_MAP  = {
   u'屋外'    : ['ESP32-outdoor-1'],
-  u'リビング': ['rasp-meter-1', 'ESP32-indoor2'], 
+  u'リビング': ['rasp-meter-1', 'rasp-meter-1'],
   u'和室'    : ['rasp-meter-2'],
   u'家事室'  : ['rasp-meter-4'],
   u'書斎'    : ['rasp-meter-3'],
@@ -511,7 +513,7 @@ HOST_MAP  = {
 # InfluxDB にアクセスしてセンサーデータを取得
 def get_sensor_value_impl(value, hostname, time_range):
   response = requests.get(
-    'http://localhost:8086/query',
+    'http://' + INFLUX_DB_HOST + ':8086/query',
     params = {
       'db': 'sensor',
       'q': (
