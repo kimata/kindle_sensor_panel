@@ -557,7 +557,7 @@ def get_sensor_data_map():
 
 def get_power_data(time_range, mode='mean'):
   try:
-    return get_sensor_value('%s(power)' % (mode), HOST_MAP[u'電力'][0], time_range)['mean']
+    return get_sensor_value('%s(power)' % (mode), HOST_MAP[u'電力'][0], time_range)[mode]
   except:
     return None
 
