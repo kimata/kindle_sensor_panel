@@ -562,12 +562,16 @@ def get_power_data(time_range, mode='mean'):
     return None
 
 def get_power_data_map():
-  return {
+  power_data = {
     '3min': get_power_data('3m'),
     '10min': get_power_data('10m'),
     '60min': get_power_data('60m'),
     '180min': get_power_data('180m'),
   }
+  if (power_data['3min'] is None):
+    power_data['3min'] = power_data['10min']
+
+  return power_data
 
 # @retry(stop_max_attempt_number=10, wait_fixed=2000)
 def draw_panel(img):
