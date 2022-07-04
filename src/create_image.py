@@ -5,6 +5,8 @@ import sys
 import os
 import datetime
 import requests
+import pathlib
+import yaml
 import numpy as np
 import PIL.Image
 import PIL.ImageDraw
@@ -12,115 +14,42 @@ import PIL.ImageFont
 import functools
 import textwrap
 
-INFLUX_DB_HOST = "columbia"
-
-IMG_DIR_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../"
-CALENDAR_ICON_PATH = IMG_DIR_PATH + "img/calendar.png"
-POWER_ICON_PATH = IMG_DIR_PATH + "img/power.png"
-
-FONT_PATH = os.path.dirname(os.path.abspath(__file__)) + "/../font/"
-FONT_MAP = {
-    "SHINGO_REGULAR": "ShinGoPro/A-OTF-ShinGoPro-Regular.otf",
-    "SHINGO_MEDIUM": "ShinGoPro/A-OTF-ShinGoPro-Medium.otf",
-    "SHINGO_BOLD": "ShinGoPro/A-OTF-ShinGoPro-Bold.otf",
-    "FUTURA_COND_BOLD": "Futura/FuturaStd-CondensedBold.otf",
-    "FUTURA_COND": "Futura/FuturaStd-Condensed.otf",
-    "FUTURA_MEDIUM": "Futura/FuturaStd-Medium.otf",
-    "FUTURA_BOLD": "Futura/FuturaStd-Bold.otf",
-}
-FACE_MAP = {
-    "date_large": {
-        "type": "FUTURA_COND_BOLD",
-        "size": 120,
-    },
-    "wday_large": {
-        "type": "SHINGO_BOLD",
-        "size": 100,
-    },
-    "power_large": {
-        "type": "FUTURA_COND_BOLD",
-        "size": 220,
-    },
-    "power_detail_label": {
-        "type": "FUTURA_MEDIUM",
-        "size": 40,
-    },
-    "power_detail_value": {
-        "type": "FUTURA_MEDIUM",
-        "size": 68,
-    },
-    "temp_large": {
-        "type": "FUTURA_COND_BOLD",
-        "size": 210,
-    },
-    "humi_large": {
-        "type": "FUTURA_COND_BOLD",
-        "size": 210,
-    },
-    "unit_large": {
-        "type": "FUTURA_MEDIUM",
-        "size": 40,
-    },
-    "place": {
-        "type": "SHINGO_MEDIUM",
-        "size": 40,
-    },
-    "temp": {
-        "type": "FUTURA_COND_BOLD",
-        "size": 152,
-    },
-    "humi": {
-        "type": "FUTURA_COND_BOLD",
-        "size": 152,
-    },
-    "co2": {
-        "type": "FUTURA_COND_BOLD",
-        "size": 100,
-    },
-    "unit": {
-        "type": "SHINGO_REGULAR",
-        "size": 40,
-    },
-    "time": {
-        "type": "SHINGO_REGULAR",
-        "size": 30,
-    },
-    "error_title": {
-        "type": "FUTURA_BOLD",
-        "size": 200,
-    },
-    "error_detail": {
-        "type": "FUTURA_MEDIUM",
-        "size": 36,
-    },
-}
-
-UNIT_MAP = {
-    "power": "W",
-    "temp": "℃",
-    "humi": "％",
-    "co2": "ppm",
-}
-PANEL = {
-    "width": 1072,
-    "height": 1448,
-}
-
-MARGIN = {
-    "panel": [30, 30],
-}
+CONFIG_PATH = "../config.yaml"
 
 
-def get_font(face):
+def abs_path(path):
+    return str(pathlib.Path(os.path.dirname(__file__), path))
+
+
+def load_config():
+    with open(abs_path(CONFIG_PATH), "r") as file:
+        return yaml.load(file, Loader=yaml.SafeLoader)
+
+
+def get_font(config, face):
+    font_config = config["FONT"]
+    face_config = config["LAYOUT"]["FACE"]
+
     font = PIL.ImageFont.truetype(
-        FONT_PATH + FONT_MAP[FACE_MAP[face]["type"]], FACE_MAP[face]["size"]
+        abs_path(font_config["PATH"] + font_config["MAP"][face_config[face]["TYPE"]]),
+        face_config[face]["SIZE"],
     )
     return font
 
 
+def get_unit(config, name):
+    param_list = config["SENSOR"]["PARAM_LIST"]
+    param_list.append(config["POWER"]["DATA"]["PARAM"])
+
+    for param in param_list:
+        if param["NAME"] == name:
+            return param["UNIT"]
+
+
 def draw_text(img, text, pos, face, align=True, color="#000"):
     draw = PIL.ImageDraw.Draw(img)
-    font = get_font(face)
+
+    font = get_font(config, face)
     next_pos_y = pos[1] + font.getsize(text)[1]
 
     if align:
@@ -137,43 +66,47 @@ def draw_text(img, text, pos, face, align=True, color="#000"):
 
 ######################################################################
 class SenseLargeHeaderPanel:
-    def __init__(self, image, offset, width):
+    def __init__(self, config, image, offset, width):
+        self.config = config
         self.image = image
         self.offset = np.array(offset)
         self.width = width
-        self.power_icon = PIL.Image.open(POWER_ICON_PATH, "r")
+        self.power_icon = PIL.Image.open(
+            abs_path(self.config["ICON"]["PATH"] + self.config["ICON"]["MAP"]["POWER"]),
+            "r",
+        )
 
     def __get_temp_box_size(self):
-        return get_font("temp_large").getsize("44.4")
+        return get_font(config, "TEMP_LARGE").getsize("44.4")
 
     def __get_temp_unit_box_size(self):
-        return get_font("unit_large").getsize(UNIT_MAP["temp"])
+        return get_font(config, "UNIT_LARGE").getsize(get_unit(self.config, "temp"))
 
     def __get_humi_box_size(self):
-        return get_font("humi_large").getsize("100.0")
+        return get_font(config, "HUMI_LARGE").getsize("100.0")
 
     def __get_humi_unit_box_size(self):
-        return get_font("unit_large").getsize(UNIT_MAP["humi"])
+        return get_font(config, "UNIT_LARGE").getsize(get_unit(self.config, "humi"))
 
     def __get_power_box_size(self):
         # PIM が baseline を取得できないっぽいので，「,」ではなく「.」を使う
-        return get_font("power_large").getsize("1.000")
+        return get_font(config, "POWER_LARGE").getsize("1.000")
 
     def __get_power_unit_box_size(self):
-        size = get_font("unit_large").getsize(UNIT_MAP["power"])
+        size = get_font(config, "UNIT_LARGE").getsize(get_unit(self.config, "power"))
         return (int(size[0] * 1.2), size[1])
 
     def __get_power_10min_label_box_size(self):
-        return get_font("power_detail_label").getsize("10min")
+        return get_font(config, "POWER_DETAIL_LABEL").getsize("10min")
 
     def __get_power_60min_label_box_size(self):
-        return get_font("power_detail_label").getsize("60min")
+        return get_font(config, "POWER_DETAIL_LABEL").getsize("60min")
 
     def __get_power_180min_label_box_size(self):
-        return get_font("power_detail_label").getsize("180min")
+        return get_font(config, "POWER_DETAIL_LABEL").getsize("180min")
 
     def __get_power_detail_value_box_size(self):
-        return get_font("power_detail_value").getsize(
+        return get_font(config, "POWER_DETAIL_VALUE").getsize(
             self.__get_power_str(2444).replace(",", ".")
         )
 
@@ -269,7 +202,7 @@ class SenseLargeHeaderPanel:
                 self.image,
                 "10min",
                 offset_map["power_10min_label_left"],
-                "power_detail_label",
+                "POWER_DETAIL_LABEL",
             )
         )
         next_draw_y_list.append(
@@ -277,7 +210,7 @@ class SenseLargeHeaderPanel:
                 self.image,
                 "60min",
                 offset_map["power_60min_label_left"],
-                "power_detail_label",
+                "POWER_DETAIL_LABEL",
             )
         )
         next_draw_y_list.append(
@@ -285,7 +218,7 @@ class SenseLargeHeaderPanel:
                 self.image,
                 "180min",
                 offset_map["power_180min_label_left"],
-                "power_detail_label",
+                "POWER_DETAIL_LABEL",
             )
         )
         next_draw_y_list.append(
@@ -293,7 +226,7 @@ class SenseLargeHeaderPanel:
                 self.image,
                 self.__get_power_str(data["power"]["10min"]),
                 offset_map["power_10min_value_right"],
-                "power_detail_value",
+                "POWER_DETAIL_VALUE",
                 False,
             )
         )
@@ -302,7 +235,7 @@ class SenseLargeHeaderPanel:
                 self.image,
                 self.__get_power_str(data["power"]["60min"]),
                 offset_map["power_60min_value_right"],
-                "power_detail_value",
+                "POWER_DETAIL_VALUE",
                 False,
             )
         )
@@ -311,16 +244,16 @@ class SenseLargeHeaderPanel:
                 self.image,
                 self.__get_power_str(data["power"]["180min"]),
                 offset_map["power_180min_value_right"],
-                "power_detail_value",
+                "POWER_DETAIL_VALUE",
                 False,
             )
         )
         next_draw_y_list.append(
             draw_text(
                 self.image,
-                UNIT_MAP["power"],
+                get_unit(config, "power"),
                 offset_map["power_unit_right"],
-                "unit_large",
+                "UNIT_LARGE",
                 False,
             )
         )
@@ -329,21 +262,27 @@ class SenseLargeHeaderPanel:
                 self.image,
                 self.__get_power_str(data["power"]["3min"]),
                 offset_map["power_right"],
-                "power_large",
+                "POWER_LARGE",
                 False,
             )
         )
 
-        return int(max(next_draw_y_list))
+        return int(max(next_draw_y_list) - 10)
 
 
 ######################################################################
 class SenseLargeFooterPanel:
-    def __init__(self, image, offset, width):
+    def __init__(self, config, image, offset, width):
+        self.config = config
         self.image = image
         self.offset = np.array(offset)
         self.width = width
-        self.calendar_icon = PIL.Image.open(CALENDAR_ICON_PATH, "r")
+        self.calendar_icon = PIL.Image.open(
+            abs_path(
+                self.config["ICON"]["PATH"] + self.config["ICON"]["MAP"]["CALENDAR"]
+            ),
+            "r",
+        )
 
     def __get_date_box_size(self, value):
         return get_font("date_large").getsize("12331")
@@ -401,44 +340,47 @@ class SenseLargeFooterPanel:
 
 ######################################################################
 class SenseDetailPanel:
-    def __init__(self, image, offset, width):
+    def __init__(self, config, image, offset, width):
+        self.config = config
         self.image = image
         self.offset = np.array(offset)
         self.width = width
 
     def __get_place_box_size(self):
-        font = get_font("place")
+        font = get_font(config, "PLACE")
         max_size = np.array([0, 0])
 
-        for label in PLACE_LIST:
-            size = np.array(font.getsize(label))
+        for room in self.config["SENSOR"]["ROOM_LIST"]:
+            size = np.array(font.getsize(room["LABEL"]))
             max_size = np.maximum(max_size, size)
 
             return max_size + np.array([font.getsize(" ")[0], 0])
 
     def __get_temp_box_size(self):
-        return get_font("temp").getsize("44.4")
+        return get_font(self.config, "TEMP").getsize("44.4")
 
     def __get_temp_unit_box_size(self):
-        size = get_font("unit").getsize(UNIT_MAP["temp"])
+        size = get_font(self.config, "UNIT").getsize(get_unit(self.config, "temp"))
         return (int(size[0] * 1), size[1])
 
     def __get_humi_box_size(self):
-        return get_font("humi").getsize("888.8")
+        return get_font(config, "HUMI").getsize("888.8")
 
     def __get_humi_unit_box_size(self):
-        size = get_font("unit").getsize(UNIT_MAP["humi"])
+        size = get_font(self.config, "UNIT").getsize(get_unit(self.config, "humi"))
         return (int(size[0] * 1), size[1])
 
     def __get_co2_box_size(self):
         return (
-            get_font("co2").getsize("2,888")[0],
-            get_font("co2").getsize("4")[1],
+            get_font(config, "CO2").getsize("2,888")[0],
+            get_font(config, "CO2").getsize("4")[1],
         )
 
     def __get_co2_unit_box_size(self):
         # PIM が baseline を取得できないっぽいので，descent が無い「m」を使う
-        size = get_font("unit").getsize("m" * len(UNIT_MAP["co2"]))
+        size = get_font(self.config, "UNIT").getsize(
+            "m" * len(get_unit(self.config, "co2"))
+        )
         return (int(size[0] * 0.8), size[1])
 
     def offset_map(self):
@@ -518,7 +460,7 @@ class SenseDetailPanel:
                     self.image,
                     data["place"],
                     offset_map["place-left"] + line_offset,
-                    "place",
+                    "PLACE",
                 )
             )
 
@@ -527,16 +469,16 @@ class SenseDetailPanel:
                     self.image,
                     self.get_float_value(data, "temp"),
                     offset_map["temp-right"] + line_offset,
-                    "temp",
+                    "TEMP",
                     False,
                 )
             )
             next_draw_y_list.append(
                 draw_text(
                     self.image,
-                    UNIT_MAP["temp"],
+                    get_unit(self.config, "temp"),
                     offset_map["temp_unit-right"] + line_offset,
-                    "unit",
+                    "UNIT",
                     False,
                 )
             )
@@ -545,16 +487,16 @@ class SenseDetailPanel:
                     self.image,
                     self.get_float_value(data, "humi"),
                     offset_map["humi-right"] + line_offset,
-                    "humi",
+                    "HUMI",
                     False,
                 )
             )
             next_draw_y_list.append(
                 draw_text(
                     self.image,
-                    UNIT_MAP["humi"],
+                    get_unit(self.config, "humi"),
                     offset_map["humi_unit-right"] + line_offset,
-                    "unit",
+                    "UNIT",
                     False,
                 )
             )
@@ -564,16 +506,16 @@ class SenseDetailPanel:
                         self.image,
                         self.get_int_value(data, "co2"),
                         offset_map["co2-right"] + line_offset,
-                        "co2",
+                        "CO2",
                         False,
                     )
                 )
                 next_draw_y_list.append(
                     draw_text(
                         self.image,
-                        UNIT_MAP["co2"],
+                        get_unit(self.config, "co2"),
                         offset_map["co2_unit-right"] + line_offset,
-                        "unit",
+                        "UNIT",
                         False,
                     )
                 )
@@ -584,13 +526,14 @@ class SenseDetailPanel:
 
 ######################################################################
 class UpdateTimePanel:
-    def __init__(self, image, offset, width):
+    def __init__(self, config, image, offset, width):
+        self.config = config
         self.image = image
         self.offset = np.array(offset)
         self.width = width
 
     def __get_time_box_size(self):
-        return get_font("time").getsize(
+        return get_font(self.config, "TIME").getsize(
             "{0:%Y-%m-%d %H:%M} 更新".format(datetime.datetime.now())
         )
 
@@ -598,7 +541,6 @@ class UpdateTimePanel:
         box_size = {
             "time": self.__get_time_box_size(),
         }
-        max_height = max(map(lambda x: x[1], box_size.values()))
 
         return {
             "time_right": self.offset + np.array([self.width, -20]),
@@ -613,7 +555,7 @@ class UpdateTimePanel:
                 self.image,
                 "{0:%Y-%m-%d %H:%M} 更新".format(data["date"]),
                 offset_map["time_right"],
-                "time",
+                "TIME",
                 False,
                 "#666",
             )
@@ -623,35 +565,28 @@ class UpdateTimePanel:
 
 
 ######################################################################
-PLACE_LIST = ["屋外", "リビング", "和室", "家事室", "書斎"]
-HOST_MAP = {
-    "屋外": ["ESP32-outdoor-1"],
-    "リビング": ["rpi-cm4-sensor-6"],
-    "和室": ["rasp-meter-2"],
-    "家事室": ["rpi-cm4-sensor-4"],
-    "書斎": ["rasp-meter-3"],
-    "電力": ["rasp-meter-5"],
-}
-
 # InfluxDB にアクセスしてセンサーデータを取得
-def get_sensor_value_impl(value, hostname, time_range):
+def get_sensor_value_impl(config, value, host, time_range):
     response = requests.get(
-        "http://" + INFLUX_DB_HOST + ":8086/query",
+        "http://"
+        + config["INFLUXDB"]["ADDR"]
+        + ":"
+        + str(config["INFLUXDB"]["PORT"])
+        + "/query",
         params={
-            "db": "sensor",
+            "db": config["INFLUXDB"]["DB"],
             "q": (
-                'SELECT %s FROM "%s" WHERE "hostname" = \'%s\' AND time > now() - %s '
+                'SELECT %s FROM "sensor.%s" WHERE "hostname" = \'%s\' AND time > now() - %s '
                 + "ORDER by time desc"
             )
             % (
                 value,
-                "sensor.esp32" if hostname.count("ESP32") else "sensor.raspberrypi",
-                hostname,
+                host["TYPE"],
+                host["NAME"],
                 time_range,
             ),
         },
     )
-
     columns = response.json()["results"][0]["series"][0]["columns"]
     values = response.json()["results"][0]["series"][0]["values"][0]
 
@@ -662,47 +597,47 @@ def get_sensor_value_impl(value, hostname, time_range):
     return data
 
 
-def get_sensor_value(value, hostname, time_range="1h"):
+def get_sensor_value(config, value, host, time_range="1h"):
     try:
-        return get_sensor_value_impl(value, hostname, time_range)
-    except Exception as e:
+        return get_sensor_value_impl(config, value, host, time_range)
+    except Exception:
         import traceback
 
-        print("WARN: host = %s" % (hostname), file=sys.stderr)
+        print("WARN: host = %s" % (host["NAME"]), file=sys.stderr)
         print(traceback.format_exc(), file=sys.stderr)
 
         return {}
 
 
-def get_sensor_data_map():
+def get_sensor_data_map(config):
     data = []
-    for place in PLACE_LIST:
-        value = {}
-        for host in HOST_MAP[place]:
-            value.update(
-                {k: v for k, v in get_sensor_value("*", host).items() if v is not None}
-            )
-        value["place"] = place
+    for room in config["SENSOR"]["ROOM_LIST"]:
+        value = {
+            k: v
+            for k, v in get_sensor_value(config, "*", room["HOST"]).items()
+            if v is not None
+        }
+        value["place"] = room["LABEL"]
         data.append(value)
 
     return data
 
 
-def get_power_data(time_range, mode="mean"):
+def get_power_data(config, time_range, mode="mean"):
     try:
-        return get_sensor_value("%s(power)" % (mode), HOST_MAP["電力"][0], time_range)[
-            mode
-        ]
+        return get_sensor_value(
+            config, "%s(power)" % (mode), config["POWER"]["DATA"]["HOST"], time_range
+        )[mode]
     except:
         return None
 
 
-def get_power_data_map():
+def get_power_data_map(config):
     power_data = {
-        "3min": get_power_data("3m"),
-        "10min": get_power_data("10m"),
-        "60min": get_power_data("60m"),
-        "180min": get_power_data("180m"),
+        "3min": get_power_data(config, "3m"),
+        "10min": get_power_data(config, "10m"),
+        "60min": get_power_data(config, "60m"),
+        "180min": get_power_data(config, "180m"),
     }
     if power_data["3min"] is None:
         power_data["3min"] = power_data["10min"]
@@ -711,53 +646,71 @@ def get_power_data_map():
 
 
 # @retry(stop_max_attempt_number=10, wait_fixed=2000)
-def draw_panel(img):
-    sense_data = get_sensor_data_map()
+def draw_panel(config, img):
+    sense_data = get_sensor_data_map(config)
 
     next_draw_y = 0
+    panel_margin = [
+        config["LAYOUT"]["MARGIN"]["WIDTH"],
+        config["LAYOUT"]["MARGIN"]["HEIGHT"],
+    ]
     sense_header_panel = SenseLargeHeaderPanel(
+        config,
         img,
-        np.array(MARGIN["panel"]) + np.array([0, next_draw_y]),
-        PANEL["width"] - MARGIN["panel"][0] * 2,
+        np.array(panel_margin) + np.array([0, next_draw_y]),
+        config["PANEL"]["DEVICE"]["WIDTH"] - config["LAYOUT"]["MARGIN"]["WIDTH"] * 2,
     )
+
     next_draw_y = sense_header_panel.draw(
         {
-            "power": get_power_data_map(),
+            "power": get_power_data_map(config),
         }
     )
 
     sense_detail_panel = SenseDetailPanel(
+        config,
         img,
-        np.array(MARGIN["panel"]) + np.array([0, next_draw_y]),
-        PANEL["width"] - MARGIN["panel"][0] * 2,
+        np.array(panel_margin) + np.array([0, next_draw_y]),
+        config["PANEL"]["DEVICE"]["WIDTH"] - config["LAYOUT"]["MARGIN"]["WIDTH"] * 2,
     )
     next_draw_y = sense_detail_panel.draw(sense_data)
 
     update_time_panel = UpdateTimePanel(
+        config,
         img,
-        np.array(MARGIN["panel"]) + np.array([0, next_draw_y]),
-        PANEL["width"] - MARGIN["panel"][0] * 2,
+        np.array(panel_margin) + np.array([0, next_draw_y]),
+        config["PANEL"]["DEVICE"]["WIDTH"] - config["LAYOUT"]["MARGIN"]["WIDTH"] * 2,
     )
     next_draw_y = update_time_panel.draw({"date": datetime.datetime.now()})
 
 
 ######################################################################
 
-
-img = PIL.Image.new("L", (PANEL["width"], PANEL["height"]), "#FFF")
+config = load_config()
+img = PIL.Image.new(
+    "L",
+    (config["PANEL"]["DEVICE"]["WIDTH"], config["PANEL"]["DEVICE"]["HEIGHT"]),
+    "#FFF",
+)
 
 try:
-    draw_panel(img)
+    draw_panel(config, img)
 except Exception:
     import traceback
 
-    title_offset = get_font("error_title").getsize("ERROR")
-    draw_text(img, "ERROR", (20, 20), "error_title")
+    draw = PIL.ImageDraw.Draw(img)
+    draw.rectangle(
+        (0, 0, config["PANEL"]["DEVICE"]["WIDTH"], config["PANEL"]["DEVICE"]["HEIGHT"]),
+        fill=(255),
+    )
+
+    title_offset = get_font(config, "ERROR_TITLE").getsize("ERROR")
+    draw_text(img, "ERROR", (20, 20), "ERROR_TITLE")
     draw_text(
         img,
         "\n".join(textwrap.wrap(traceback.format_exc(), 45)),
         (20, 20 + title_offset[1] + 40),
-        "error_detail",
+        "ERROR_DETAIL",
     )
 
     print(traceback.format_exc(), file=sys.stderr)

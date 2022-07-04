@@ -1,0 +1,129 @@
+INFLUXDB:
+  ADDR: 192.168.0.10
+  PORT: 8086
+  DB: sensor
+
+SENSOR:
+  ROOM_LIST:
+    - LABEL: 屋外
+      HOST:
+        NAME: ESP32-outdoor-1
+        TYPE: esp32
+    - LABEL: リビング
+      HOST:
+        NAME: rpi-cm4-sensor-6
+        TYPE: raspberrypi
+    - LABEL: 和室
+      TYPE: raspberrypi
+      HOST:
+        NAME: rasp-meter-2
+        TYPE: raspberrypi
+    - LABEL: 家事室
+      HOST:
+        NAME: rpi-cm4-sensor-4
+        TYPE: raspberrypi
+    - LABEL: 書斎
+      HOST:
+        NAME: rasp-meter-3
+        TYPE: raspberrypi
+
+  PARAM_LIST:
+    - NAME: temp
+      FORMAT: '{:.1f}'
+      UNIT: '℃'
+    - NAME: humi
+      FORMAT: '{:.1f}'
+      UNIT: '%'
+    - NAME: co2
+      FORMAT: '{:.0f}'
+      UNIT: ppm
+
+PANEL:
+  DEVICE:
+    WIDTH: 1072
+    HEIGHT: 1448
+
+LAYOUT:
+  MARGIN:
+    WIDTH: 30
+    HEIGHT: 30
+  FACE:
+    DATE_LARGE:
+      TYPE: EN_COND_BOLD
+      SIZE: 120
+    WDAY_LARGE:
+      TYPE: JP_BOLD
+      SIZE: 100
+    POWER_LARGE:
+      TYPE: EN_COND_BOLD
+      SIZE: 220
+    POWER_DETAIL_LABEL:
+      TYPE: EN_MEDIUM
+      SIZE: 40
+    POWER_DETAIL_VALUE:
+      TYPE: EN_MEDIUM
+      SIZE: 68
+    TEMP_LARGE:
+      TYPE: EN_COND_BOLD
+      SIZE: 210
+    HUMI_LARGE:
+      TYPE: EN_COND_BOLD
+      SIZE: 210
+    UNIT_LARGE:
+      TYPE: EN_MEDIUM
+      SIZE: 40
+    PLACE:
+      TYPE: JP_MEDIUM
+      SIZE: 40
+    TEMP:
+      TYPE: EN_COND_BOLD
+      SIZE: 152
+    HUMI:
+      TYPE: EN_COND_BOLD
+      SIZE: 152
+    CO2:
+      TYPE: EN_COND_BOLD
+      SIZE: 100
+    UNIT:
+      TYPE: JP_REGULAR
+      SIZE: 40
+    TIME:
+      TYPE: JP_REGULAR
+      SIZE: 30
+    ERROR_TITLE:
+      TYPE: EN_BOLD
+      SIZE: 200
+    ERROR_DETAIL:
+      TYPE: EN_MEDIUM
+      SIZE: 36
+
+POWER:
+  WIDTH: 1600
+  HEIGHT: 500
+  OVERLAP: 380
+  DATA:
+    HOST:
+      NAME: rasp-meter-5
+      TYPE: raspberrypi
+    PARAM:
+      NAME: power
+      FORMAT: '{:.0f}'
+      UNIT: W
+
+FONT:
+  PATH: ../font/ # スクリプトのフォルダからの相対パス
+  MAP:
+    JP_REGULAR: ShinGoPro/A-OTF-ShinGoPro-Regular.otf
+    JP_MEDIUM: ShinGoPro/A-OTF-ShinGoPro-Medium.otf
+    JP_BOLD: ShinGoPro/A-OTF-ShinGoPro-Bold.otf
+
+    EN_COND_BOLD: Futura/FuturaStd-CondensedBold.otf
+    EN_COND: Futura/FuturaStd-Condensed.otf
+    EN_MEDIUM: Futura/FuturaStd-Medium.otf
+    EN_BOLD: Futura/FuturaStd-Bold.otf
+
+ICON:
+  PATH: ../img/ # スクリプトのフォルダからの相対パス
+  MAP:
+    POWER: power.png
+    CALENDAR: calendar.png
