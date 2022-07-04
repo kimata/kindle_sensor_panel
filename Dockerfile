@@ -10,8 +10,9 @@ RUN apt-get install -y python3 python3-pip
 RUN apt-get install -y python3-yaml
 RUN apt-get install -y python3-influxdb
 RUN apt-get install -y python3-pil python3-numpy
+RUN apt-get install -y python3-paramiko
 
 WORKDIR /opt/kindle_display
 COPY . .
 
-CMD ["./src/create_image.py"]
+CMD ["./src/display_image.py"]
