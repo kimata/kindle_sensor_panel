@@ -55,7 +55,11 @@ while True:
         ssh_stdin.write(proc.communicate()[0])
         ssh_stdin.close()
         fail = 0
+        print(".", end="")
+        sys.stdout.flush()
     except:
+        print("x", end="")
+        sys.stdout.flush()
         fail += 1
         time.sleep(10)
         ssh = ssh_connect()
