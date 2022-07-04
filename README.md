@@ -8,6 +8,3 @@ display_image.py を実行すると定期に表示を更新します．
     sudo apt install python3-netmiko
     sudo apt install python3-numpy
     sudo apt install python3-pil
-
-
-
