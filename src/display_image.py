@@ -30,7 +30,10 @@ def ssh_connect():
     return ssh
 
 
-kindle_hostname = sys.argv[1]
+if len(sys.argv) == 1:
+    kindle_hostname = os.environ["KINDLE_HOSTNAME"]
+else:
+    kindle_hostname = sys.argv[1]
 
 print("kindle hostname: %s" % (kindle_hostname))
 
