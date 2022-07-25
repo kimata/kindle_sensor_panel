@@ -4,7 +4,6 @@
 import sys
 import os
 import datetime
-import requests
 import pathlib
 import yaml
 import numpy as np
@@ -13,6 +12,20 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import functools
 import textwrap
+import influxdb_client
+
+FLUX_QUERY = """
+from(bucket: "{bucket}")
+    |> range(start: -{period})
+    |> filter(fn:(r) => r._measurement == "sensor.{measure}")
+    |> filter(fn: (r) => r.hostname == "{hostname}")
+    |> filter(fn: (r) => r["_field"] == "{param}")
+    |> aggregateWindow(every: {window}, fn: mean, createEmpty: false)
+    |> exponentialMovingAverage(n: 3)
+    |> sort(columns: ["_time"], desc: true)
+    |> limit(n: 1)
+"""
+
 
 CONFIG_PATH = "../config.yaml"
 
@@ -114,7 +127,7 @@ class SenseLargeHeaderPanel:
         if value is None:
             return "?  "
         else:
-            return "{:,}".format(int(value))
+            return config["POWER"]["DATA"]["PARAM"]["FORMAT"].format(value)
 
     def offset_map(self, data):
         box_size = {
@@ -436,15 +449,15 @@ class SenseDetailPanel:
 
         return offset_map
 
-    def get_float_value(self, data, key):
-        if key in data:
-            return "%.1f" % (data[key])
-        else:
-            return "?  "
+    def get_format(self, key):
+        for param in self.config["SENSOR"]["PARAM_LIST"]:
+            if param["NAME"] == key:
+                return param["FORMAT"]
+        return "{}"
 
-    def get_int_value(self, data, key):
+    def get_formatted_value(self, data, key):
         if key in data:
-            return "{:,}".format(data[key])
+            return self.get_format(key).format((data[key]))
         else:
             return "?  "
 
@@ -467,7 +480,7 @@ class SenseDetailPanel:
             next_draw_y_list.append(
                 draw_text(
                     self.image,
-                    self.get_float_value(data, "temp"),
+                    self.get_formatted_value(data, "temp"),
                     offset_map["temp-right"] + line_offset,
                     "TEMP",
                     False,
@@ -485,7 +498,7 @@ class SenseDetailPanel:
             next_draw_y_list.append(
                 draw_text(
                     self.image,
-                    self.get_float_value(data, "humi"),
+                    self.get_formatted_value(data, "humi"),
                     offset_map["humi-right"] + line_offset,
                     "HUMI",
                     False,
@@ -504,7 +517,7 @@ class SenseDetailPanel:
                 next_draw_y_list.append(
                     draw_text(
                         self.image,
-                        self.get_int_value(data, "co2"),
+                        self.get_formatted_value(data, "co2"),
                         offset_map["co2-right"] + line_offset,
                         "CO2",
                         False,
@@ -566,68 +579,59 @@ class UpdateTimePanel:
 
 ######################################################################
 # InfluxDB にアクセスしてセンサーデータを取得
-def get_sensor_value_impl(config, value, host, time_range):
-    response = requests.get(
-        "http://"
-        + config["INFLUXDB"]["ADDR"]
-        + ":"
-        + str(config["INFLUXDB"]["PORT"])
-        + "/query",
-        params={
-            "db": config["INFLUXDB"]["DB"],
-            "q": (
-                'SELECT %s FROM "sensor.%s" WHERE "hostname" = \'%s\' AND time > now() - %s '
-                + "ORDER by time desc"
-            )
-            % (
-                value,
-                host["TYPE"],
-                host["NAME"],
-                time_range,
-            ),
-        },
+def get_db_value(config, hostname, measure, param, period="1h", window="3m"):
+    client = influxdb_client.InfluxDBClient(
+        url=config["INFLUXDB"]["URL"],
+        token=config["INFLUXDB"]["TOKEN"],
+        org=config["INFLUXDB"]["ORG"],
     )
-    columns = response.json()["results"][0]["series"][0]["columns"]
-    values = response.json()["results"][0]["series"][0]["values"][0]
 
-    data = {}
-    for i, key in enumerate(columns):
-        data[key] = values[i]
+    query_api = client.query_api()
+    table_list = query_api.query(
+        query=FLUX_QUERY.format(
+            bucket=config["INFLUXDB"]["BUCKET"],
+            measure=measure,
+            hostname=hostname,
+            param=param,
+            period=period,
+            window=window,
+        )
+    )
 
-    return data
-
-
-def get_sensor_value(config, value, host, time_range="1h"):
-    try:
-        return get_sensor_value_impl(config, value, host, time_range)
-    except Exception:
-        import traceback
-
-        print("WARN: host = %s" % (host["NAME"]), file=sys.stderr)
-        print(traceback.format_exc(), file=sys.stderr)
-
-        return {}
+    return table_list[0].records[0].get_value()
 
 
 def get_sensor_data_map(config):
     data = []
     for room in config["SENSOR"]["ROOM_LIST"]:
-        value = {
-            k: v
-            for k, v in get_sensor_value(config, "*", room["HOST"]).items()
-            if v is not None
-        }
-        value["place"] = room["LABEL"]
+        value = {"place": room["LABEL"]}
+        for param in ["temp", "humi", "co2"]:
+            try:
+                value[param] = get_db_value(
+                    config,
+                    room["HOST"]["NAME"],
+                    room["HOST"]["TYPE"],
+                    param,
+                    period="1h",
+                    window="3m",
+                )
+            except:
+                pass
         data.append(value)
 
     return data
 
 
-def get_power_data(config, time_range, mode="mean"):
+def get_power_data(config, window):
     try:
-        return get_sensor_value(
-            config, "%s(power)" % (mode), config["POWER"]["DATA"]["HOST"], time_range
-        )[mode]
+        return get_db_value(
+            config,
+            config["POWER"]["DATA"]["HOST"]["NAME"],
+            config["POWER"]["DATA"]["HOST"]["TYPE"],
+            "power",
+            period="6h",
+            window=window,
+        )
     except:
         return None
 
@@ -685,7 +689,6 @@ def draw_panel(config, img):
 
 
 ######################################################################
-
 config = load_config()
 img = PIL.Image.new(
     "L",
