@@ -16,11 +16,11 @@ FAIL_MAX = 5
 CREATE_IMAGE = os.path.dirname(os.path.abspath(__file__)) + "/create_image.py"
 
 
-def ssh_connect():
+def ssh_connect(hostname):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(
-        kindle_hostname,
+        hostname,
         username="root",
         password="mario",
         allow_agent=False,
@@ -37,7 +37,7 @@ else:
 
 print("kindle hostname: %s" % (kindle_hostname))
 
-ssh = ssh_connect()
+ssh = ssh_connect(kindle_hostname)
 ssh.exec_command("initctl stop powerd")
 ssh.exec_command("initctl stop framework")
 
@@ -58,11 +58,11 @@ while True:
         print(".", end="")
         sys.stdout.flush()
     except:
-        print("x", end="")
+        print("x")
         sys.stdout.flush()
         fail += 1
         time.sleep(10)
-        ssh = ssh_connect()
+        ssh = ssh_connect(kindle_hostname)
 
     # close だけだと，SSH 側がしばらく待っていることがあったので，念のため
     del ssh_stdin
@@ -74,8 +74,8 @@ while True:
 
     # 更新されていることが直感的に理解しやすくなるように，更新タイミングを 0 秒
     # に合わせる
-    # (例えば，1分間隔更新だとして，1分59秒に更新されると，2分59秒まで更新されないので
-    # 2分40秒くらいに表示を見た人は本当に1分感覚で更新されているのか心配になる)
+    # (例えば，1分間隔更新だとして，1分40秒に更新されると，2分40秒まで更新されないので
+    # 2分45秒くらいに表示を見た人は本当に1分間隔で更新されているのか心配になる)
     time.sleep(UPDATE_SEC - datetime.datetime.now().second)
 
     i += 1
