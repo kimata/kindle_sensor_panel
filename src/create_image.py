@@ -685,7 +685,9 @@ def draw_panel(config, img):
         np.array(panel_margin) + np.array([0, next_draw_y]),
         config["PANEL"]["DEVICE"]["WIDTH"] - config["LAYOUT"]["MARGIN"]["WIDTH"] * 2,
     )
-    next_draw_y = update_time_panel.draw({"date": datetime.datetime.now()})
+
+    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9), "JST"))
+    next_draw_y = update_time_panel.draw({"date": now})
 
 
 ######################################################################
