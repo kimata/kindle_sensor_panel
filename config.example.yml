@@ -43,6 +43,8 @@ PANEL:
   DEVICE:
     WIDTH: 1072
     HEIGHT: 1448
+  UPDATE:
+    INTERVAL: 120
 
 LAYOUT:
   MARGIN:
@@ -128,3 +130,6 @@ ICON:
   MAP:
     POWER: power.png
     CALENDAR: calendar.png
+
+LIVENESS:
+  FILE: /dev/shm/healthz

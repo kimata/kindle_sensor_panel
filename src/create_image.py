@@ -5,7 +5,6 @@ import sys
 import os
 import datetime
 import pathlib
-import yaml
 import numpy as np
 import PIL.Image
 import PIL.ImageDraw
@@ -13,6 +12,10 @@ import PIL.ImageFont
 import functools
 import textwrap
 import influxdb_client
+import logging
+
+from config import load_config
+import logger
 
 FLUX_QUERY = """
 from(bucket: "{bucket}")
@@ -27,16 +30,8 @@ from(bucket: "{bucket}")
 """
 
 
-CONFIG_PATH = "../config.yaml"
-
-
 def abs_path(path):
     return str(pathlib.Path(os.path.dirname(__file__), path))
-
-
-def load_config():
-    with open(abs_path(CONFIG_PATH), "r") as file:
-        return yaml.load(file, Loader=yaml.SafeLoader)
 
 
 def get_font(config, face):
@@ -203,6 +198,8 @@ class SenseLargeHeaderPanel:
         return offset_map
 
     def draw(self, data):
+        logging.info("draw header")
+
         offset_map = self.offset_map(data)
         next_draw_y_list = []
 
@@ -317,6 +314,8 @@ class SenseLargeFooterPanel:
         }
 
     def draw(self, data):
+        logging.info("draw footer")
+
         data["date_str"] = "{0:%-m/%-d}".format(data["date"])
         data["wday_str"] = "(%s)" % (
             ["月", "火", "水", "木", "金", "土", "日"][data["date"].weekday()]
@@ -462,6 +461,8 @@ class SenseDetailPanel:
             return "?  "
 
     def draw(self, data_list):
+        logging.info("draw detail")
+
         offset_map = self.offset_map()
         next_draw_y_list = []
 
@@ -560,6 +561,8 @@ class UpdateTimePanel:
         }
 
     def draw(self, data):
+        logging.info("draw update time")
+
         offset_map = self.offset_map(data)
         next_draw_y_list = []
 
@@ -602,6 +605,8 @@ def get_db_value(config, hostname, measure, param, period="1h", window="3m"):
 
 
 def get_sensor_data_map(config):
+    logging.info("fetch sensor data")
+
     data = []
     for room in config["SENSOR"]["ROOM_LIST"]:
         value = {"place": room["LABEL"]}
@@ -637,6 +642,8 @@ def get_power_data(config, window):
 
 
 def get_power_data_map(config):
+    logging.info("fetch power data")
+
     power_data = {
         "3min": get_power_data(config, "3m"),
         "10min": get_power_data(config, "10m"),
@@ -691,6 +698,10 @@ def draw_panel(config, img):
 
 
 ######################################################################
+logger.init("Kindle Sensor Panel")
+
+logging.info("start to create image")
+
 config = load_config()
 img = PIL.Image.new(
     "L",
