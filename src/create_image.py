@@ -583,8 +583,7 @@ class UpdateTimePanel:
 ######################################################################
 # InfluxDB にアクセスしてセンサーデータを取得
 def get_db_value(config, hostname, measure, param, period="1h", window="3m"):
-    token = os.environ.get("INFFLUXDB_TOKEN") or config["INFLUXDB"]["TOKEN"]
-
+    token = os.environ.get("INFLUXDB_TOKEN", config["INFLUXDB"]["TOKEN"])
     client = influxdb_client.InfluxDBClient(
         url=config["INFLUXDB"]["URL"],
         token=token,
