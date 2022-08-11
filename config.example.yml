@@ -1,6 +1,6 @@
 INFLUXDB:
   URL: http://tanzania.green-rabbit.net:8086
-  TOKEN: fffjkjkgfklhjglkjiojtroijojhkljhklghklfjklhhlnklhnklfgnhklgnhgfdlhfgnhlkngdfnfnhgdkfnh==
+  TOKEN: dummy
   ORG: home
   BUCKET: sensor
 
