@@ -37,10 +37,9 @@ def ssh_connect(hostname):
 
 logger.init("Kindle Sensor Panel")
 
-if len(sys.argv) == 1:
-    kindle_hostname = os.environ["KINDLE_HOSTNAME"]
-else:
-    kindle_hostname = sys.argv[1]
+kindle_hostname = os.environ.get(
+    "KINDLE_HOSTNAME", sys.argv[1] if len(sys.argv) != 1 else None
+)
 
 logging.info("Kindle hostname: %s" % (kindle_hostname))
 
