@@ -443,7 +443,7 @@ class SenseDetailPanel:
         return "{}"
 
     def get_formatted_value(self, data, key):
-        if key in data:
+        if (key in data) and (data[key] is not None):
             return self.get_format(key).format((data[key]))
         else:
             return "?  "
@@ -576,6 +576,9 @@ def get_sensor_data_map(config):
     for room in config["SENSOR"]["ROOM_LIST"]:
         value = {"place": room["LABEL"]}
         for param in ["temp", "humi", "co2"]:
+            if (room["HOST"]["TYPE"] == "esp32") and (param == "co2"):
+                continue
+
             value[param] = sensor_data.get_db_value(
                 config,
                 room["HOST"]["NAME"],
