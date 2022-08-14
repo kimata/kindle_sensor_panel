@@ -589,6 +589,8 @@ def get_sensor_data_map(config):
             )
         data.append(value)
 
+    logging.info("data = {data}".format(data=str(data)))
+
     return data
 
 
@@ -614,6 +616,8 @@ def get_power_data_map(config):
     }
     if power_data["3min"] is None:
         power_data["3min"] = power_data["10min"]
+
+    logging.info("data = {data}".format(data=str(power_data)))
 
     return power_data
 
