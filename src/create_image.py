@@ -11,23 +11,11 @@ import PIL.ImageDraw
 import PIL.ImageFont
 import functools
 import textwrap
-import influxdb_client
 import logging
 
+import sensor_data
 from config import load_config
 import logger
-
-FLUX_QUERY = """
-from(bucket: "{bucket}")
-    |> range(start: -{period})
-    |> filter(fn:(r) => r._measurement == "sensor.{measure}")
-    |> filter(fn: (r) => r.hostname == "{hostname}")
-    |> filter(fn: (r) => r["_field"] == "{param}")
-    |> aggregateWindow(every: {window}, fn: mean, createEmpty: false)
-    |> exponentialMovingAverage(n: 3)
-    |> sort(columns: ["_time"], desc: true)
-    |> limit(n: 1)
-"""
 
 
 def abs_path(path):
@@ -581,30 +569,6 @@ class UpdateTimePanel:
 
 
 ######################################################################
-# InfluxDB にアクセスしてセンサーデータを取得
-def get_db_value(config, hostname, measure, param, period="1h", window="3m"):
-    token = os.environ.get("INFLUXDB_TOKEN", config["INFLUXDB"]["TOKEN"])
-    client = influxdb_client.InfluxDBClient(
-        url=config["INFLUXDB"]["URL"],
-        token=token,
-        org=config["INFLUXDB"]["ORG"],
-    )
-
-    query_api = client.query_api()
-    table_list = query_api.query(
-        query=FLUX_QUERY.format(
-            bucket=config["INFLUXDB"]["BUCKET"],
-            measure=measure,
-            hostname=hostname,
-            param=param,
-            period=period,
-            window=window,
-        )
-    )
-
-    return table_list[0].records[0].get_value()
-
-
 def get_sensor_data_map(config):
     logging.info("fetch sensor data")
 
@@ -612,34 +576,28 @@ def get_sensor_data_map(config):
     for room in config["SENSOR"]["ROOM_LIST"]:
         value = {"place": room["LABEL"]}
         for param in ["temp", "humi", "co2"]:
-            try:
-                value[param] = get_db_value(
-                    config,
-                    room["HOST"]["NAME"],
-                    room["HOST"]["TYPE"],
-                    param,
-                    period="1h",
-                    window="3m",
-                )
-            except:
-                pass
+            value[param] = sensor_data.get_db_value(
+                config,
+                room["HOST"]["NAME"],
+                room["HOST"]["TYPE"],
+                param,
+                period="1h",
+                window="3m",
+            )
         data.append(value)
 
     return data
 
 
 def get_power_data(config, window):
-    try:
-        return get_db_value(
-            config,
-            config["POWER"]["DATA"]["HOST"]["NAME"],
-            config["POWER"]["DATA"]["HOST"]["TYPE"],
-            "power",
-            period="6h",
-            window=window,
-        )
-    except:
-        return None
+    return sensor_data.get_db_value(
+        config,
+        config["POWER"]["DATA"]["HOST"]["NAME"],
+        config["POWER"]["DATA"]["HOST"]["TYPE"],
+        "power",
+        period="6h",
+        window=window,
+    )
 
 
 def get_power_data_map(config):
