@@ -664,7 +664,7 @@ def draw_panel(config, img):
 
 
 ######################################################################
-logger.init("Kindle Sensor Panel")
+logger.init("panel.kindle.sensor")
 
 logging.info("start to create image")
 
