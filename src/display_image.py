@@ -10,6 +10,7 @@ import os
 import gc
 import pathlib
 import logging
+import traceback
 
 import logger
 from config import load_config
@@ -45,9 +46,14 @@ logging.info("Kindle hostname: %s" % (kindle_hostname))
 
 config = load_config()
 
-ssh = ssh_connect(kindle_hostname)
-ssh.exec_command("initctl stop powerd")
-ssh.exec_command("initctl stop framework")
+try:
+    ssh = ssh_connect(kindle_hostname)
+    logging.info("put the kindle into signage mode")
+    ssh.exec_command("initctl stop powerd")
+    ssh.exec_command("initctl stop framework")
+except:
+    logging.error(traceback.format_exc())
+    sys.exit(-1)
 
 i = 0
 fail = 0
