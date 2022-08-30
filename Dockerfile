@@ -13,7 +13,7 @@ RUN apt-get install -y python3-paramiko
 
 RUN pip3 install 'influxdb-client[ciso]'
 
-WORKDIR /opt/sensor_panel
+WORKDIR /opt/kindle_sensor
 COPY . .
 
 CMD ["./src/display_image.py"]
