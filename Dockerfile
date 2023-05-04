@@ -11,11 +11,11 @@ RUN apt-get install -y python3-yaml python3-coloredlogs
 RUN apt-get install -y python3-pil python3-numpy
 RUN apt-get install -y python3-paramiko
 
-RUN apt-get clean
-
-RUN pip3 install 'influxdb-client[ciso]'
-
 WORKDIR /opt/kindle_sensor
+
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+
 COPY . .
 
 CMD ["./src/display_image.py"]

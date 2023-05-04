@@ -10,12 +10,14 @@ import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
 import functools
+import traceback
 import textwrap
 import logging
 
 import sensor_data
 from config import load_config
 import logger
+import notify_slack
 
 
 def abs_path(path):
@@ -670,33 +672,45 @@ logging.info("start to create image")
 
 config = load_config()
 img = PIL.Image.new(
-    "L",
+    "RGBA",
     (config["PANEL"]["DEVICE"]["WIDTH"], config["PANEL"]["DEVICE"]["HEIGHT"]),
-    "#FFF",
+    (255, 255, 255, 255),
 )
 
 try:
     draw_panel(config, img)
-except Exception:
-    import traceback
-
+except:
     draw = PIL.ImageDraw.Draw(img)
     draw.rectangle(
         (0, 0, config["PANEL"]["DEVICE"]["WIDTH"], config["PANEL"]["DEVICE"]["HEIGHT"]),
-        fill=(255),
+        fill=(255, 255, 255, 255),
     )
 
-    title_offset = get_font(config, "ERROR_TITLE").getsize("ERROR")
-    draw_text(img, "ERROR", (20, 20), "ERROR_TITLE")
     draw_text(
         img,
-        "\n".join(textwrap.wrap(traceback.format_exc(), 45)),
-        (20, 20 + title_offset[1] + 40),
-        "ERROR_DETAIL",
+        "ERROR",
+        (10, 40),
+        get_font(config["FONT"], "EN_BOLD", 160),
+        "left",
+        "#666",
     )
 
+    draw_text(
+        img,
+        "\n".join(textwrap.wrap(traceback.format_exc(), 60)),
+        (20, 180),
+        get_font(config["FONT"], "EN_MEDIUM", 36),
+        "left" "#333",
+    )
+    if "SLACK" in config:
+        notify_slack.error(
+            config["SLACK"]["BOT_TOKEN"],
+            config["SLACK"]["ERROR"]["CHANNEL"],
+            traceback.format_exc(),
+            config["SLACK"]["ERROR"]["INTERVAL_MIN"],
+        )
     print(traceback.format_exc(), file=sys.stderr)
 
-img.save(sys.stdout.buffer, "PNG")
+img.convert("L").save(sys.stdout.buffer, "PNG")
 
 exit(0)
