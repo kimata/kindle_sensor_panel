@@ -116,14 +116,15 @@ POWER:
 FONT:
   PATH: ../font/ # スクリプトのフォルダからの相対パス
   MAP:
-    JP_REGULAR: ShinGoPro/A-OTF-ShinGoPro-Regular.otf
-    JP_MEDIUM: ShinGoPro/A-OTF-ShinGoPro-Medium.otf
-    JP_BOLD: ShinGoPro/A-OTF-ShinGoPro-Bold.otf
+    JP_REGULAR: migmix-1p-regular.ttf
+    JP_MEDIUM: migmix-1p-regular.ttf
+    JP_BOLD: migmix-1p-bold.ttf
 
-    EN_COND_BOLD: Futura/FuturaStd-CondensedBold.otf
-    EN_COND: Futura/FuturaStd-Condensed.otf
-    EN_MEDIUM: Futura/FuturaStd-Medium.otf
-    EN_BOLD: Futura/FuturaStd-Bold.otf
+    EN_COND_BOLD: Antonio-Bold.ttf
+    EN_COND: Antonio-Regular.ttf
+
+    EN_MEDIUM: migmix-1p-regular.ttf
+    EN_BOLD: migmix-1p-bold.ttf
 
 ICON:
   PATH: ../img/ # スクリプトのフォルダからの相対パス
