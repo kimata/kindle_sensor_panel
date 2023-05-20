@@ -557,10 +557,6 @@ class UpdateTimePanel:
         )
 
     def offset_map(self, data):
-        box_size = {
-            "time": self.__get_time_box_size(),
-        }
-
         return {
             "time_right": self.offset + np.array([self.width, -20]),
         }

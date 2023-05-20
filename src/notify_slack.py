@@ -17,9 +17,9 @@ SIMPLE_TMPL = """\
 [
     {{
         "type": "header",
-	"text": {{
+    "text": {{
             "type": "plain_text",
-	    "text": "{title}",
+        "text": "{title}",
             "emoji": true
         }}
     }},
@@ -27,8 +27,8 @@ SIMPLE_TMPL = """\
         "type": "section",
         "text": {{
             "type": "mrkdwn",
-	    "text": {message}
-	}}
+        "text": {message}
+    }}
     }}
 ]
 """
