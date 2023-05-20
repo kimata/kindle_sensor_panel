@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+電子ペーパ表示用の画像を表示します．
+
+Usage:
+  display_image.py [-f CONFIG] [-t HOSTNAME] [-s]
+
+Options:
+  -f CONFIG    : CONFIG を設定ファイルとして読み込んで実行します．[default: config.yaml]
+  -t HOSTNAME  : 表示を行う Raspberry Pi のホスト名．
+  -s           : 1回のみ表示
+"""
+
+from docopt import docopt
 
 import paramiko
 import datetime
@@ -8,14 +21,15 @@ import time
 import sys
 import os
 import gc
-import pathlib
 import logging
+import pathlib
 import traceback
 
 import logger
 from config import load_config
 import notify_slack
 
+NOTIFY_THRESHOLD = 2
 UPDATE_SEC = 60
 REFRESH = 60
 FAIL_MAX = 5
@@ -27,6 +41,7 @@ def notify_error(config):
     notify_slack.error(
         config["SLACK"]["BOT_TOKEN"],
         config["SLACK"]["ERROR"]["CHANNEL"],
+        config["SLACK"]["FROM"],
         traceback.format_exc(),
         config["SLACK"]["ERROR"]["INTERVAL_MIN"],
     )
@@ -46,15 +61,31 @@ def ssh_connect(hostname):
     return ssh
 
 
+def display_image(ssh):
+    ssh_stdin = ssh.exec_command(
+        "cat - > draw.png && eips %s -g draw.png"
+        % ("-f" if (i % REFRESH) == 0 else ""),
+    )[0]
+
+    proc = subprocess.Popen(["python3", CREATE_IMAGE], stdout=subprocess.PIPE)
+    ssh_stdin.write(proc.communicate()[0])
+    ssh_stdin.close()
+    sys.stdout.flush()
+
+    return proc
+
+
+######################################################################
+args = docopt(__doc__)
+
 logger.init("panel.kindle.sensor", level=logging.INFO)
 
-kindle_hostname = os.environ.get(
-    "KINDLE_HOSTNAME", sys.argv[1] if len(sys.argv) != 1 else None
-)
+is_onece = args["-s"]
+kindle_hostname = os.environ.get("KINDLE_HOSTNAME", args["-t"])
 
 logging.info("Kindle hostname: %s" % (kindle_hostname))
 
-config = load_config()
+config = load_config(args["-f"])
 
 try:
     ssh = ssh_connect(kindle_hostname)
@@ -66,46 +97,43 @@ except:
     logging.error(traceback.format_exc())
     sys.exit(-1)
 
+
 i = 0
-fail = 0
+fail_count = 0
 while True:
     ssh_stdin = None
     try:
-        ssh_stdin = ssh.exec_command(
-            "cat - > draw.png && eips %s -g draw.png"
-            % ("-f" if (i % REFRESH) == 0 else ""),
-        )[0]
-
-        proc = subprocess.Popen(["python3", CREATE_IMAGE], stdout=subprocess.PIPE)
-        ssh_stdin.write(proc.communicate()[0])
-        ssh_stdin.close()
-        fail = 0
-        sys.stdout.flush()
+        proc = display_image(ssh)
 
         if proc.returncode != 0:
-            logging.error(
-                "Failed to create image. (code: {code})".format(code=proc.returncode)
+            message = "Failed to create image. (code: {code})".format(
+                code=proc.returncode
             )
-            sys.exit(proc.returncode)
+            logging.error(message)
+            raise message
+
+        fail_count = 0
 
         logging.info("Finish.")
         pathlib.Path(config["LIVENESS"]["FILE"]).touch()
-    except:
-        sys.stdout.flush()
-        notify_error(config)
-        logging.error(traceback.format_exc())
 
-        fail += 1
-        time.sleep(10)
-        ssh = ssh_connect(kindle_hostname)
+        if is_onece:
+            break
+    except:
+        fail_count += 1
+
+        if is_onece or (fail_count >= NOTIFY_THRESHOLD):
+            notify_error(config)
+            logging.error("エラーが続いたので終了します．")
+            raise
+        else:
+            time.sleep(10)
+            ssh = ssh_connect(kindle_hostname)
+            pass
 
     # close だけだと，SSH 側がしばらく待っていることがあったので，念のため
     del ssh_stdin
     gc.collect()
-
-    if fail > FAIL_MAX:
-        sys.stderr.write("接続エラーが続いたので終了します．\n")
-        sys.exit(-1)
 
     # 更新されていることが直感的に理解しやすくなるように，更新タイミングを 0 秒
     # に合わせる
