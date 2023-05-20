@@ -1,6 +1,6 @@
 INFLUXDB:
-  URL: http://tanzania.green-rabbit.net:8086
-  TOKEN: dummy
+  URL: http://proxy.green-rabbit.net:8086
+  TOKEN: strBCB9segqccgxsR5Xe_9RnCqkBFYX9aOKvxVR4lr3iLEb7HXuGqsN40YU6DIb6TZm9bvKLW5OWQS7sB8AQbQ==
   ORG: home
   BUCKET: sensor
 
@@ -9,24 +9,24 @@ SENSOR:
     - LABEL: 屋外
       HOST:
         NAME: ESP32-outdoor-1
-        TYPE: esp32
+        TYPE: sensor.esp32
     - LABEL: リビング
       HOST:
         NAME: rpi-cm4-sensor-6
-        TYPE: raspberrypi
+        TYPE: sensor.rasp
     - LABEL: 和室
-      TYPE: raspberrypi
+      TYPE: sensor.raspberrypi
       HOST:
         NAME: rasp-meter-2
-        TYPE: raspberrypi
+        TYPE: sensor.rasp
     - LABEL: 家事室
       HOST:
         NAME: rpi-cm4-sensor-4
-        TYPE: raspberrypi
+        TYPE: sensor.rasp
     - LABEL: 書斎
       HOST:
         NAME: rasp-meter-3
-        TYPE: raspberrypi
+        TYPE: sensor.rasp
 
   PARAM_LIST:
     - NAME: temp
@@ -36,7 +36,7 @@ SENSOR:
       FORMAT: '{:.1f}'
       UNIT: '%'
     - NAME: co2
-      FORMAT: '{:.0f}'
+      FORMAT: '{:,.0f}'
       UNIT: ppm
 
 PANEL:
@@ -107,10 +107,10 @@ POWER:
   DATA:
     HOST:
       NAME: rasp-meter-5
-      TYPE: raspberrypi
+      TYPE: sensor.rasp
     PARAM:
       NAME: power
-      FORMAT: '{:.0f}'
+      FORMAT: '{:,.0f}'
       UNIT: W
 
 FONT:
