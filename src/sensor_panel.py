@@ -12,6 +12,7 @@ import functools
 import logging
 
 from sensor_data import fetch_data
+from config import get_db_config
 
 
 def abs_path(path):
@@ -594,14 +595,15 @@ def get_sensor_data_map(config):
                 continue
 
             sensor_data = fetch_data(
-                config["INFLUXDB"],
+                get_db_config(config),
                 room["HOST"]["TYPE"],
                 room["HOST"]["NAME"],
                 param,
                 "1h",
+                last=True,
             )
             if sensor_data["valid"]:
-                value[param] = sensor_data["value"][-1]
+                value[param] = sensor_data["value"][0]
 
         data.append(value)
 
@@ -612,15 +614,15 @@ def get_sensor_data_map(config):
 
 def get_power_data(config, window_min):
     return fetch_data(
-        config["INFLUXDB"],
+        get_db_config(config),
         config["POWER"]["DATA"]["HOST"]["TYPE"],
         config["POWER"]["DATA"]["HOST"]["NAME"],
         "power",
         "6h",
         window_min,
         window_min,
-        False,
-    )["value"][-1]
+        last=True,
+    )["value"][0]
 
 
 def get_power_data_map(config):
