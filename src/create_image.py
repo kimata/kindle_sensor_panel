@@ -29,7 +29,7 @@ from config import load_config
 def notify_error(config):
     notify_slack.error(
         config["SLACK"]["BOT_TOKEN"],
-        config["SLACK"]["ERROR"]["CHANNEL"],
+        config["SLACK"]["ERROR"]["CHANNEL"]["NAME"],
         config["SLACK"]["FROM"],
         traceback.format_exc(),
         config["SLACK"]["ERROR"]["INTERVAL_MIN"],
@@ -43,7 +43,10 @@ logger.init("panel.kindle.sensor", level=logging.INFO)
 
 logging.info("Start to create image")
 
-config = load_config(args["-f"])
+config_file = args["-f"]
+
+logging.info("Using config config: {config_file}".format(config_file=config_file))
+config = load_config(config_file)
 
 img = PIL.Image.new(
     "RGBA",
@@ -54,7 +57,6 @@ img = PIL.Image.new(
 status = 0
 try:
     draw_sensor_panel(config, img)
-
 except:
     draw = PIL.ImageDraw.Draw(img)
     draw.rectangle(

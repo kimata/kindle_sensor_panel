@@ -40,7 +40,7 @@ CREATE_IMAGE = os.path.dirname(os.path.abspath(__file__)) + "/create_image.py"
 def notify_error(config):
     notify_slack.error(
         config["SLACK"]["BOT_TOKEN"],
-        config["SLACK"]["ERROR"]["CHANNEL"],
+        config["SLACK"]["ERROR"]["CHANNEL"]["NAME"],
         config["SLACK"]["FROM"],
         traceback.format_exc(),
         config["SLACK"]["ERROR"]["INTERVAL_MIN"],
@@ -80,7 +80,7 @@ args = docopt(__doc__)
 
 logger.init("panel.kindle.sensor", level=logging.INFO)
 
-is_onece = args["-s"]
+is_one_time = args["-s"]
 kindle_hostname = os.environ.get("KINDLE_HOSTNAME", args["-t"])
 
 logging.info("Kindle hostname: %s" % (kindle_hostname))
@@ -117,12 +117,12 @@ while True:
         logging.info("Finish.")
         pathlib.Path(config["LIVENESS"]["FILE"]).touch()
 
-        if is_onece:
+        if is_one_time:
             break
     except:
         fail_count += 1
 
-        if is_onece or (fail_count >= NOTIFY_THRESHOLD):
+        if is_one_time or (fail_count >= NOTIFY_THRESHOLD):
             notify_error(config)
             logging.error("エラーが続いたので終了します．")
             raise
