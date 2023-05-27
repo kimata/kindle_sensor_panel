@@ -4,10 +4,10 @@
 電子ペーパ表示用の画像を生成します．
 
 Usage:
-  create_image.py [-f CONFIG] [-o PNG_FILE]
+  create_image.py [-c CONFIG] [-o PNG_FILE]
 
 Options:
-  -f CONFIG    : CONFIG を設定ファイルとして読み込んで実行します．[default: config.yaml]
+  -c CONFIG    : CONFIG を設定ファイルとして読み込んで実行します．[default: config.yaml]
   -o PNG_FILE  : 生成した画像を指定されたパスに保存します．
 """
 
@@ -43,7 +43,7 @@ logger.init("panel.kindle.sensor", level=logging.INFO)
 
 logging.info("Start to create image")
 
-config_file = args["-f"]
+config_file = args["-c"]
 
 logging.info("Using config config: {config_file}".format(config_file=config_file))
 config = load_config(config_file)

@@ -4,10 +4,10 @@
 電子ペーパ表示用の画像を表示します．
 
 Usage:
-  display_image.py [-f CONFIG] [-t HOSTNAME] [-s]
+  display_image.py [-c CONFIG] [-t HOSTNAME] [-s]
 
 Options:
-  -f CONFIG    : CONFIG を設定ファイルとして読み込んで実行します．[default: config.yaml]
+  -c CONFIG    : CONFIG を設定ファイルとして読み込んで実行します．[default: config.yaml]
   -t HOSTNAME  : 表示を行う Raspberry Pi のホスト名．
   -s           : 1回のみ表示
 """
@@ -85,7 +85,7 @@ kindle_hostname = os.environ.get("KINDLE_HOSTNAME", args["-t"])
 
 logging.info("Kindle hostname: %s" % (kindle_hostname))
 
-config = load_config(args["-f"])
+config = load_config(args["-c"])
 
 try:
     ssh = ssh_connect(kindle_hostname)
