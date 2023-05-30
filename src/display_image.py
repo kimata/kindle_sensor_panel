@@ -105,16 +105,18 @@ while True:
     try:
         proc = display_image(ssh)
 
-        if proc.returncode != 0:
-            message = "Failed to create image. (code: {code})".format(
-                code=proc.returncode
+        if proc.returncode == 0:
+            logging.info("Success.")
+        elif proc.returncode == 222:
+            logging.warn("Finish. (something is wrong)")
+            raise
+        else:
+            logging.error(
+                "Failed to create image. (code: {code})".format(code=proc.returncode)
             )
-            logging.error(message)
-            raise message
+            raise
 
-        fail_count = 0
-
-        logging.info("Finish.")
+        logging.info("Success.")
         pathlib.Path(config["LIVENESS"]["FILE"]).touch()
 
         if is_one_time:
